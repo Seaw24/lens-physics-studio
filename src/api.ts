@@ -1,4 +1,5 @@
 import type { Moment, Message, Concept, TutorReply } from "../shared/physics";
+import type { CourseAnalysis } from "../shared/diagnostic";
 export interface ServiceStatus {
   configured: boolean;
   mode: "bedrock" | "rehearsal";
@@ -47,6 +48,13 @@ export const analyzeFrames = (
     { frames, duration },
     signal,
   );
+
+export const analyzeCoursePdf = (data: string, signal?: AbortSignal) =>
+  request<{
+    analysis: CourseAnalysis;
+    mode: "bedrock";
+    model: string;
+  }>("/api/analyze-course", { data }, signal);
 // Select low-resolution, chronological evidence from a local file. No audio or full video is uploaded.
 export async function sampleVideo(
   url: string,
