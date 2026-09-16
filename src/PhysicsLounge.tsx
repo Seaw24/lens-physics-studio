@@ -99,9 +99,7 @@ export default function PhysicsLounge({
         </button>
       </div>
       <div className="lounge-scope">
-        A space for your bigger questions.
-        <br />
-        The event’s coaching stays in the player.
+        Open-ended physics questions — separate from the event coach.
       </div>
       <div
         className="lounge-conversation"
@@ -111,16 +109,8 @@ export default function PhysicsLounge({
       >
         {messages.length === 0 ? (
           <div className="lounge-welcome">
-            <span className="eyebrow">FOLLOW YOUR CURIOSITY</span>
-            <h3>
-              What else
-              <br />
-              <em>are you wondering?</em>
-            </h3>
-            <p>
-              Connect this idea to forces, energy, motion, or something you saw
-              in class.
-            </p>
+            <h3>Ask anything</h3>
+            <p>Forces, energy, motion, or your coursework.</p>
             {[
               "How are force and motion different?",
               "Where does the ball’s energy go?",

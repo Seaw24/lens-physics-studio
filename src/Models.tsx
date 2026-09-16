@@ -93,7 +93,7 @@ export default function Models({
   return (
     <div className="model-lab">
       <div className="lab-meta">
-        <span className="eyebrow">YOUR PHYSICS SANDBOX</span>
+        <span className="eyebrow">Physics lab</span>
         <span className="source-tag">Hypothetical values</span>
       </div>
       {concept === "force" ? (

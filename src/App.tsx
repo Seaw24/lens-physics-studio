@@ -14,10 +14,7 @@ import {
   Film,
   FlaskConical,
   Layers3,
-  Leaf,
-  Lightbulb,
   LoaderCircle,
-  Play,
   Plus,
   RotateCcw,
   Settings2,
@@ -47,7 +44,7 @@ import VideoPlayer from "./VideoPlayer";
 import { BasketballArt } from "./Projectile";
 
 type Page = "today" | "course" | "moments" | "review" | "investigate" | "guide";
-type Modal = "settings" | "present" | "upload" | null;
+type Modal = "settings" | "upload" | null;
 const notebookKey = "lens-notebook-v1";
 function readRecords(): LearningRecord[] {
   try {
@@ -106,8 +103,7 @@ export default function App() {
     ),
     [progress, setProgress] = useState(0),
     [uploadError, setUploadError] = useState(""),
-    [sampleCount, setSampleCount] = useState(0),
-    [presentationStep, setPresentationStep] = useState(0);
+    [sampleCount, setSampleCount] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null),
     objectUrl = useRef(""),
     analysis = useRef<AbortController | null>(null),
@@ -342,11 +338,11 @@ export default function App() {
     }
   }
   const navItems = [
-    { id: "today", label: "Your day", icon: Eye },
-    { id: "course", label: "Your course", icon: BookOpen },
+    { id: "today", label: "Today", icon: Eye },
+    { id: "course", label: "Course", icon: BookOpen },
     { id: "moments", label: "Notebook", icon: Bookmark },
-    { id: "review", label: "Practice & recall", icon: Layers3 },
-    { id: "guide", label: "Guide & about", icon: CircleHelp },
+    { id: "review", label: "Practice", icon: Layers3 },
+    { id: "guide", label: "Guide", icon: CircleHelp },
   ] as const;
   return (
     <div className="app-shell">
@@ -364,7 +360,6 @@ export default function App() {
             lens<span className="brand-period">.</span>
           </span>
         </button>
-        <p className="brand-caption">A new way to see.</p>
         <nav aria-label="Main navigation">
           {navItems.map(({ id, label, icon: Icon }) => (
             <button
@@ -391,26 +386,14 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-course">
-          <span className="eyebrow">IN YOUR ORBIT</span>
           <div className="mini-book">
             <BookOpen size={19} />
           </div>
-          <strong>Physics, connected.</strong>
+          <strong>Week 04</strong>
           <p>Projectile motion</p>
           <button className="text-button" onClick={() => navigate("course")}>
-            Open this week <ArrowUpRight size={14} />
+            Open course <ArrowUpRight size={14} />
           </button>
-          <div className="course-progress">
-            <span
-              style={{
-                width: `${Math.min(100, (new Set(records.map((r) => r.concept)).size / 1) * 100)}%`,
-              }}
-            />
-          </div>
-          <small>
-            {new Set(records.map((r) => r.concept)).size} of 1 connection
-            explored
-          </small>
         </div>
         <div className="sidebar-bottom">
           <button
@@ -447,15 +430,6 @@ export default function App() {
               />
               {mode === "bedrock" ? "Bedrock connected" : "Demo mode"}
             </button>
-            <button
-              className="present-button"
-              onClick={() => {
-                setPresentationStep(0);
-                setModal("present");
-              }}
-            >
-              <Play size={13} /> Present demo
-            </button>
           </div>
         </header>
         <main id="main-content" tabIndex={-1}>
@@ -463,17 +437,10 @@ export default function App() {
             <div className="day-page page-enter">
               <div className="page-heading">
                 <div>
-                  <div className="eyebrow heading-eyebrow">
-                    <span className="tiny-sun">✳</span> YOUR EVERYDAY,
-                    RECONSIDERED
-                  </div>
-                  <h1>
-                    The world is your
-                    <br />
-                    <em>physics lab.</em>
-                  </h1>
+                  <h1>Basketball shot</h1>
                   <p>
-                    One basketball shot. A different way to understand motion.
+                    Watch the event, answer guided questions, then test the
+                    physics in the lab.
                   </p>
                 </div>
                 <button
@@ -481,19 +448,6 @@ export default function App() {
                   onClick={() => setModal("upload")}
                 >
                   <Plus size={16} /> Add a recording
-                </button>
-              </div>
-              <div className="lens-introduction">
-                <span className="intro-mark">
-                  <Sparkles size={18} />
-                </span>
-                <p>
-                  <strong>A little context. A new connection.</strong> Watch an
-                  event, think with your coach, then test the physics for
-                  yourself.
-                </p>
-                <button onClick={() => navigate("guide")}>
-                  Meet Lens <ArrowUpRight size={15} />
                 </button>
               </div>
               <div className="daily-layout">
@@ -548,10 +502,9 @@ export default function App() {
                     <div className="discovery-bar">
                       <span className="pulse-dot" />
                       <div>
-                        <strong>Replaying how Lens notices</strong>
+                        <strong>Discovery replay</strong>
                         <small>
-                          Curated events · normal playback · invitations after
-                          each event
+                          Invitations appear after each event
                         </small>
                       </div>
                       <button
@@ -589,11 +542,9 @@ export default function App() {
                   )}
                   <div className="moments-section">
                     <div className="section-heading">
-                      <h2>
-                        One shot. <em>A new way to see.</em>
-                      </h2>
+                      <h2>Events</h2>
                       <span>
-                        {isDemo ? "FROM THE COURT" : "FROM YOUR RECORDING"}
+                        {isDemo ? "Demo clip" : "Your recording"}
                       </span>
                     </div>
                     <div className="moment-list">
@@ -662,20 +613,9 @@ export default function App() {
                         <div className="invitation-eyebrow">
                           <LensMark small />
                           <span>
-                            {invitation
-                              ? "A MOMENT JUST OPENED UP"
-                              : "A DIFFERENT WAY TO SEE"}
+                            {invitation ? "Ready to explore" : "Projectile motion"}
                           </span>
                         </div>
-                        <span className="moment-concept">
-                          {moment.concept === "projectile"
-                            ? "One shot. A surprising question."
-                            : moment.concept === "torque"
-                              ? "01 force. One turning point."
-                              : moment.concept === "force"
-                                ? "In motion. Worth a pause."
-                                : "A little balance. A big idea."}
-                        </span>
                         <h2>
                           {moment.concept === "projectile"
                             ? "At the highest point, does gravity take a break?"
@@ -770,14 +710,14 @@ export default function App() {
                                 : [...prev, moment.id],
                             );
                             setInvitation(null);
-                            setToast("Saved for your next break.");
+                            setToast("Saved for later.");
                           }}
                         >
-                          <Clock3 size={13} /> Save for a quieter moment
+                          <Clock3 size={13} /> Save for later
                         </button>
                       </div>
                       <div className="course-connection">
-                        <span className="eyebrow">RIGHT ON TIME FOR CLASS</span>
+                        <span className="eyebrow">Course connection</span>
                         <div>
                           <BookOpen size={21} />
                           <h3>
@@ -795,16 +735,16 @@ export default function App() {
                           className="text-button"
                           onClick={() => navigate("course")}
                         >
-                          See your lecture notes <ArrowUpRight size={14} />
+                          Open course <ArrowUpRight size={14} />
                         </button>
                       </div>
                     </>
                   ) : (
                     <div className="moment-invitation">
                       <LensMark small />
-                      <h2>There’s a question in your everyday.</h2>
+                      <h2>No events yet</h2>
                       <p>
-                        Add a recording, then connect it to this week’s physics.
+                        Add a recording or use the demo clip to get started.
                       </p>
                       <button
                         className="button pale"
@@ -814,20 +754,8 @@ export default function App() {
                       </button>
                     </div>
                   )}
-                  <div className="quiet-promise">
-                    <Leaf size={18} />
-                    <p>
-                      A little curiosity.
-                      <br />
-                      At your own pace.
-                    </p>
-                  </div>
                 </aside>
               </div>
-              <footer className="page-footer">
-                <span>LENS LEARNING STUDIO</span>
-                <span>Notice → Wonder → Understand</span>
-              </footer>
             </div>
           )}
           {page === "investigate" && moment && (
@@ -851,16 +779,11 @@ export default function App() {
           )}
           {page === "course" && (
             <div className="course-page page-enter">
-              <div className="eyebrow">YOUR COURSE / WEEK 04</div>
-              <h1>
-                A little theory.
-                <br />
-                <em>A world of possibilities.</em>
-              </h1>
+              <div className="eyebrow">Week 04</div>
+              <h1>Projectile motion</h1>
               <p className="page-intro">
-                Start from the material your class is actually using. Lens maps
-                the unit, checks the prerequisite ideas, and builds a learning
-                route before the first explanation.
+                Map your material, check your starting point, then practice with
+                the basketball demo.
               </p>
               <div className="course-banner">
                 <div className="course-book">
@@ -884,87 +807,14 @@ export default function App() {
                   navigate("investigate");
                 }}
               />
-              <div className="course-content">
-                <section>
-                  <div className="section-heading">
-                    <h2>Your lecture notes</h2>
-                    <span>CURATED FOR THIS DEMO</span>
-                  </div>
-                  {COURSE.notes.map((note, i) => (
-                    <article className="lecture-note" key={note.id}>
-                      <span className="lecture-number">{note.id}</span>
-                      <div>
-                        <h3>{note.title}</h3>
-                        <p>{note.body}</p>
-                        <div className="lecture-equation">
-                          {
-                            [
-                              "aₓ = 0     aᵧ = −g",
-                              "At the apex: vᵧ = 0, aᵧ = −g",
-                              "x = v₀ cos θ · t",
-                            ][i]
-                          }
-                        </div>
-                        <button
-                          className="text-button"
-                          onClick={() => {
-                            if (!isDemo) {
-                              useDemo();
-                              setSelected(DEMO_MOMENTS[0].id);
-                              navigate("investigate");
-                            } else
-                              investigate(
-                                moments.find(
-                                  (m) => m.concept === DEMO_MOMENTS[0].concept,
-                                ) || DEMO_MOMENTS[0],
-                              );
-                          }}
-                        >
-                          See it in an everyday moment{" "}
-                          <ArrowUpRight size={15} />
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </section>
-                <aside className="objectives">
-                  <span className="eyebrow">WHAT YOU’RE WORKING TOWARD</span>
-                  <h2>
-                    From remembering
-                    <br />
-                    to reasoning.
-                  </h2>
-                  {COURSE.objectives.map((objective, i) => (
-                    <div key={objective}>
-                      <span>0{i + 1}</span>
-                      <p>{objective}</p>
-                    </div>
-                  ))}
-                  <div className="objective-note">
-                    <CircleHelp size={18} />
-                    <p>
-                      These are learning goals, not inferred mastery scores.
-                      Your notebook keeps the explanations you actually write.
-                    </p>
-                  </div>
-                </aside>
-              </div>
             </div>
           )}
           {page === "moments" && (
             <div className="notebook-page page-enter">
               <div className="page-heading">
                 <div>
-                  <div className="eyebrow">YOUR NOTEBOOK</div>
-                  <h1>
-                    Ideas with
-                    <br />
-                    <em>somewhere to live.</em>
-                  </h1>
-                  <p>
-                    Your moments, your reasoning, your growing collection of
-                    connections.
-                  </p>
+                  <h1>Notebook</h1>
+                  <p>Saved reflections from your investigations.</p>
                 </div>
                 {records.length > 0 && (
                   <button className="button secondary" onClick={exportNotebook}>
@@ -978,10 +828,10 @@ export default function App() {
                     <BookOpen size={66} strokeWidth={0.9} />
                     <span>✳</span>
                   </div>
-                  <h2>Your first connection is waiting.</h2>
+                  <h2>Nothing saved yet</h2>
                   <p>
-                    Explore a moment, test your idea, and explain it in your own
-                    words. We’ll keep that explanation here.
+                    Complete an investigation and your explanation will appear
+                    here.
                   </p>
                   <button
                     className="button primary"
@@ -1131,10 +981,9 @@ export default function App() {
             </button>
             {modal === "settings" && (
               <>
-                <div className="eyebrow">LENS STUDIO</div>
-                <h2 id="modal-title">Made for your pace.</h2>
+                <h2 id="modal-title">Settings</h2>
                 <p className="modal-intro">
-                  Choose how the tutor works and see what this prototype uses.
+                  Tutor mode and data handling for this prototype.
                 </p>
                 <div className="settings-block">
                   <h3>Tutor connection</h3>
@@ -1216,24 +1065,14 @@ export default function App() {
                     </p>
                   </div>
                 </div>
-                <div className="settings-block">
-                  <h3>About this demonstration</h3>
-                  <p>
-                    The basketball footage is real. The course and learning
-                    prompts are prepared examples. Models calculate real physics
-                    from hypothetical values. Live video discovery requires
-                    Bedrock and is limited to the frames it receives.
-                  </p>
-                </div>
               </>
             )}
             {modal === "upload" && (
               <>
-                <div className="eyebrow">BRING YOUR OWN EVERYDAY</div>
-                <h2 id="modal-title">Start with a recording.</h2>
+                <h2 id="modal-title">Add a recording</h2>
                 <p className="modal-intro">
-                  A basketball shot works best from a stationary side view, with
-                  the full ball flight visible. Short clips are welcome.
+                  Side-view basketball shots work best. MP4 or WebM, up to 500
+                  MB.
                 </p>
                 <button
                   className="upload-zone"
@@ -1401,80 +1240,6 @@ export default function App() {
                 </button>
               </>
             )}
-            {modal === "present" && (
-              <>
-                <div className="eyebrow">THE THREE-MINUTE STORY</div>
-                <h2 id="modal-title">
-                  From “I know the formula”
-                  <br />
-                  <em>to “I see it everywhere.”</em>
-                </h2>
-                <p className="modal-intro">
-                  Walk through one student’s learning loop. This demo uses a
-                  prepared course and your basketball recording.
-                </p>
-                <div className="presentation-steps">
-                  {[
-                    {
-                      title: "A shot supplies the question.",
-                      body: "Explore this event plays just the 2.3-second shot from start to finish. Then the player returns to a prepared teaching frame.",
-                      icon: Eye,
-                    },
-                    {
-                      title: "The student supplies a first idea.",
-                      body: "Answer inside the video stage. Physics arrows appear directly over the basketball to explain gravity, vertical velocity, and horizontal motion. The separate Physics lounge is for broader questions.",
-                      icon: Lightbulb,
-                    },
-                    {
-                      title: "An experiment changes their thinking.",
-                      body: "Play the ideal trajectory, then pause at the apex. Vertical velocity reaches zero while downward acceleration remains. Change the launch angle and speed.",
-                      icon: FlaskConical,
-                    },
-                    {
-                      title: "Understanding leaves a trace.",
-                      body: "Explain why gravity stays active, save the connection, and try the idea with a different ball or launch condition.",
-                      icon: Bookmark,
-                    },
-                  ].map(({ title, body, icon: Icon }, i) => (
-                    <button
-                      key={title}
-                      className={presentationStep === i ? "current" : ""}
-                      onClick={() => setPresentationStep(i)}
-                    >
-                      <span className="presentation-icon">
-                        <Icon size={19} />
-                      </span>
-                      <div>
-                        <span>0{i + 1}</span>
-                        <h3>{title}</h3>
-                        {presentationStep === i && <p>{body}</p>}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <div className="presentation-actions">
-                  <button className="button primary" onClick={replayDiscovery}>
-                    <Play size={15} /> Start the basketball clip
-                  </button>
-                  <button
-                    className="text-button"
-                    onClick={() => {
-                      useDemo();
-                      setSelected("shot");
-                      navigate("investigate");
-                      setModal(null);
-                    }}
-                  >
-                    Jump to the interaction <ArrowRight size={15} />
-                  </button>
-                </div>
-                <p className="microcopy">
-                  Demo tutor responses are scripted. The Bedrock adapter
-                  supports live tutoring and sampled-frame analysis when
-                  credentials are configured.
-                </p>
-              </>
-            )}
           </div>
         </div>
       )}
@@ -1492,7 +1257,7 @@ function Review({
   const questions = [
     {
       id: "apex",
-      concept: "GRAVITY / A NEW SETTING",
+      concept: "Gravity",
       title: "A volleyball reaches its peak.",
       context:
         "A volleyball has left the player’s hand and reached the highest point of its flight. Ignore air resistance.",
@@ -1504,7 +1269,7 @@ function Review({
     },
     {
       id: "horizontal",
-      concept: "COMPONENTS / FOLLOW THE MOTION",
+      concept: "Components",
       title: "The ball keeps travelling.",
       context:
         "A basketball travels through the air after release. Gravity is the only force in our ideal model.",
@@ -1516,7 +1281,7 @@ function Review({
     },
     {
       id: "mass",
-      concept: "TRANSFER / CHANGE THE BALL",
+      concept: "Transfer",
       title: "A heavier ball. A different path?",
       context:
         "Two balls have different masses but the same launch speed, angle, and height. Ignore air resistance.",
@@ -1535,15 +1300,9 @@ function Review({
     correct = choice === q.answer;
   return (
     <div className="review-page page-enter">
-      <div className="eyebrow">PRACTICE & RECALL</div>
-      <h1>
-        Same idea.
-        <br />
-        <em>A different everyday.</em>
-      </h1>
+      <h1>Practice</h1>
       <p className="page-intro">
-        Can you recognize the relationship when the scene changes? Try before
-        looking back.
+        Apply projectile motion to new scenarios.
       </p>
       <div className="review-layout">
         <section className="review-card">
@@ -1578,11 +1337,7 @@ function Review({
                 role="status"
               >
                 <div>
-                  <strong>
-                    {correct
-                      ? "You carried the idea into a new setting."
-                      : "A useful place to revisit."}
-                  </strong>
+                  <strong>{correct ? "Correct" : "Not quite"}</strong>
                   <p>{q.explanation}</p>
                 </div>
               </div>
@@ -1611,15 +1366,9 @@ function Review({
           )}
         </section>
         <aside className="review-aside">
-          <span className="eyebrow">BUILDING THE CONNECTION</span>
-          <h2>
-            Remember the idea,
-            <br />
-            not just the answer.
-          </h2>
+          <h2>Transfer check</h2>
           <p>
-            These practice questions change the object or launch conditions.
-            That’s how you check whether the relationship travels with you.
+            Same physics, different context — can you recognize the pattern?
           </p>
           <div className="review-stats">
             <span>
@@ -1634,7 +1383,7 @@ function Review({
           {records.find((r) => r.concept === "projectile") ? (
             <div className="past-reflection">
               <Bookmark size={17} />
-              <span className="eyebrow">YOUR EARLIER EXPLANATION</span>
+              <span className="eyebrow">Your reflection</span>
               <details>
                 <summary>Look back after you try</summary>
                 <p>

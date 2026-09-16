@@ -80,7 +80,7 @@ export default function CoachedInvestigation({
     >
       <div className="event-breadcrumb">
         <button className="text-button" onClick={onBack}>
-          <ArrowLeft size={14} /> Your day
+          <ArrowLeft size={14} /> Today
         </button>
         <span>/</span>
         <span>Basketball</span>
@@ -92,12 +92,7 @@ export default function CoachedInvestigation({
       </div>
       <div className="event-heading">
         <div>
-          <span className="eyebrow">
-            AN EVERYDAY MOMENT. YOUR NEXT CONNECTION.
-          </span>
-          <h1>
-            There’s more to <em>this shot.</em>
-          </h1>
+          <h1>Basketball shot</h1>
         </div>
         <button
           className={`lounge-launch ${lounge ? "is-open" : ""}`}
@@ -161,35 +156,26 @@ export default function CoachedInvestigation({
           {view === "lab" && (
             <div className="event-lab-view">
               <div className="lab-brief">
-                <span className="eyebrow">
-                  FROM THE REAL SHOT TO A TESTABLE IDEA
-                </span>
-                <h2>
-                  Change the shot.
-                  <br />
-                  <em>Keep asking why.</em>
-                </h2>
+                <h2>Physics lab</h2>
                 <p>
-                  Try a different launch angle. Pause at the top. Notice what
-                  changes—and what gravity keeps doing.
+                  Change launch angle, speed, or height. Pause at the apex and
+                  compare velocity and acceleration.
                 </p>
                 <div className="lab-brief-insight">
                   <span>Try this</span>
                   <strong>Make the arc higher.</strong>
                   <p>
-                    At the same launch speed, does a steeper angle give the ball
-                    more time in the air?
+                    At the same speed, does a steeper angle give more air time?
                   </p>
                 </div>
                 <button
                   className="button primary"
                   onClick={() => setView("coach")}
                 >
-                  Back to your coaching pause <ArrowRight size={15} />
+                  Back to coach <ArrowRight size={15} />
                 </button>
                 <span className="lab-brief-footnote">
-                  These controls are hypothetical. They don’t estimate the
-                  player’s actual shot.
+                  Hypothetical values — not measured from the video.
                 </span>
               </div>
               <Models

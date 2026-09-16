@@ -369,11 +369,9 @@ export default function CourseDiagnostic({
             <span>/ {questions.length}</span>
           </div>
           <div>
-            <div className="eyebrow">YOUR STARTING POINT</div>
-            <h2>A route built around what you need next.</h2>
+            <h2>Your results</h2>
             <p>
-              This is evidence from one short check—not a permanent mastery
-              label. Lens will update the route as you practice and explain.
+              Based on one short check — not a permanent mastery score.
             </p>
           </div>
           <div className="results-heading-actions">
@@ -422,7 +420,7 @@ export default function CourseDiagnostic({
             ))}
           </div>
           <aside className="next-lesson-card">
-            <div className="eyebrow">RECOMMENDED NEXT · 12 MIN</div>
+            <div className="eyebrow">Recommended next</div>
             <span className="route-icon">
               <Route size={21} />
             </span>
@@ -481,11 +479,9 @@ export default function CourseDiagnostic({
           <BrainCircuit size={24} />
         </div>
         <div>
-          <div className="eyebrow">DIAGNOSE BEFORE TEACHING</div>
-          <h2>Your course sets the starting line.</h2>
+          <h2>Course diagnostic</h2>
           <p>
-            Lens maps the ideas and prerequisites in your material, then checks
-            the few skills that matter for your next lesson.
+            Map your material, then take a short skills check.
           </p>
         </div>
         <button
@@ -625,14 +621,12 @@ export default function CourseDiagnostic({
             </div>
           </div>
           <aside className="diagnostic-start-card">
-            <div className="eyebrow">READY FOR A QUICK CHECK</div>
             <span className="spark-orbit" aria-hidden="true">
               <Sparkles size={22} />
             </span>
-            <h3>Five questions. A much better place to begin.</h3>
+            <h3>Skills check</h3>
             <p>
-              A mix of concepts, interpretation, and calculation—selected from
-              the material at left.
+              Five questions from your course material. About 7 minutes.
             </p>
             <ul>
               <li>
