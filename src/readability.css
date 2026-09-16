@@ -1,0 +1,919 @@
+/* Reading and touch targets take priority over the compact studio chrome. */
+main {
+  max-width: 1320px;
+}
+.topbar {
+  max-width: 1216px;
+  margin-inline: auto;
+}
+.sidebar nav > button {
+  font-size: 13px;
+}
+.brand-caption {
+  font-size: 11px;
+}
+.sidebar-course > strong {
+  font-size: 14px;
+}
+.sidebar-course > p,
+.sidebar-course .text-button {
+  font-size: 12px;
+}
+.sidebar-course > small {
+  font-size: 10px;
+  color: #687959;
+}
+.student-profile strong {
+  font-size: 11px;
+}
+.student-profile small {
+  font-size: 10px;
+  color: #647159;
+}
+.settings-button {
+  font-size: 12px;
+  color: #64765a;
+}
+.breadcrumb {
+  font-size: 11px;
+  color: #637256;
+}
+.week-badge,
+.connection-status,
+.present-button {
+  font-size: 11px;
+}
+.connection-status {
+  color: #657853;
+}
+.page-heading > div > p,
+.page-intro {
+  font-size: 14px;
+  color: #697a59;
+}
+.button {
+  font-size: 12px;
+  min-height: 42px;
+}
+.text-button {
+  font-size: 12px;
+  color: #5b7545;
+}
+.eyebrow {
+  font-size: 10px;
+  color: #6b7d53;
+}
+.quiet-label {
+  font-size: 10px;
+  color: #71805f;
+}
+.source-tag {
+  font-size: 9px;
+  color: #617d43;
+}
+.section-topline strong {
+  font-size: 13px;
+}
+.section-topline .quiet-label {
+  font-size: 11px;
+  color: #71805f;
+}
+.section-heading > span {
+  font-size: 9px;
+  color: #73825f;
+}
+.recording-caption > span,
+.recording-caption .text-button {
+  font-size: 10px;
+  color: #71805f;
+}
+.recording-caption {
+  line-height: 1.7;
+}
+.time-readout {
+  font-size: 10px;
+}
+.player-controls select {
+  font-size: 10px;
+  width: 40px;
+}
+.moment-row-copy strong {
+  font-size: 14px;
+}
+.moment-row-copy small {
+  font-size: 11px;
+  color: #71805f;
+}
+.moment-timestamp {
+  font-size: 11px;
+  color: #71805f;
+}
+.moment-number {
+  font-size: 13px;
+  color: #788d5e;
+}
+.invitation-eyebrow > span:last-child {
+  font-size: 9px;
+  letter-spacing: 0.8px;
+}
+.moment-concept {
+  font-size: 11px;
+  color: #bccda4;
+}
+.moment-invitation > p {
+  font-size: 13px;
+  color: #c2d1ac;
+}
+.moment-invitation > .button {
+  font-size: 12px;
+}
+.save-later {
+  font-size: 10px;
+  color: #c3d1af;
+  padding-top: 16px;
+}
+.course-connection > .eyebrow {
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.course-connection h3 {
+  font-size: 14px;
+}
+.course-connection > p {
+  font-size: 12px;
+  color: #73895a;
+}
+.course-connection .text-button {
+  font-size: 11px;
+}
+.quiet-promise {
+  color: #7c9167;
+}
+.quiet-promise > p {
+  font-size: 11px;
+}
+.page-footer {
+  font-size: 9px;
+  color: #82916c;
+}
+.discovery-bar strong {
+  font-size: 12px;
+}
+.discovery-bar small {
+  font-size: 10px;
+  color: #6a814b;
+}
+.availability-button {
+  font-size: 11px;
+  color: #647b4c;
+}
+.deferred-note {
+  font-size: 12px;
+  color: #7f754c;
+}
+.deferred-note .text-button {
+  font-size: 11px;
+}
+.back-button {
+  font-size: 12px;
+  color: #6e8356;
+}
+.compact-button {
+  font-size: 11px;
+}
+.learning-path > div {
+  font-size: 12px;
+  color: #7c8a68;
+}
+.learning-path > div > span {
+  font-size: 10px;
+  width: 25px;
+  height: 25px;
+}
+.workspace-tabs button {
+  font-size: 12px;
+  color: #738861;
+}
+.workspace-tabs .quiet-label {
+  font-size: 10px;
+  color: #7e8d6b;
+}
+.observation-note > .eyebrow {
+  font-size: 10px;
+}
+.observation-note p {
+  font-size: 14px;
+  color: #637c4f;
+}
+.observation-note .text-button {
+  font-size: 11px;
+}
+.evidence-ledger small {
+  font-size: 10px;
+  color: #738560;
+}
+.evidence-ledger strong {
+  font-size: 12px;
+  color: #5f754d;
+}
+.task-label > span {
+  font-size: 10px;
+  color: #648346;
+}
+.task-label > small {
+  font-size: 10px;
+  color: #708657;
+}
+.learning-task > p {
+  font-size: 14px;
+  color: #637f4c;
+}
+.learning-task h2 {
+  font-size: 25px;
+}
+.prediction-options button {
+  font-size: 12px;
+  min-height: 42px;
+}
+.tutor-panel {
+  min-height: 710px;
+}
+.tutor-heading h2 {
+  font-size: 14px;
+}
+.tutor-heading > div > span {
+  font-size: 10px;
+  color: #718857;
+}
+.tutor-context {
+  font-size: 10px;
+  color: #68824a;
+}
+.chat-message p {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #4f693f;
+}
+.chat-message.user p {
+  font-size: 13px;
+  color: #5e7648;
+}
+.message-source {
+  font-size: 9px;
+}
+.message-source > span {
+  font-size: 9px;
+  color: #7d8d67;
+}
+.tutor-heading {
+  padding: 18px 16px;
+}
+.chat-messages {
+  padding: 20px 17px;
+}
+.hint-button {
+  font-size: 11px;
+  color: #638445;
+  padding: 9px 10px;
+}
+.hint-button span {
+  font-size: 9px;
+  color: #7d9461;
+}
+.chat-composer textarea {
+  font-size: 12px;
+  line-height: 1.7;
+  min-height: 43px;
+}
+.chat-composer textarea::placeholder {
+  color: #809666;
+}
+.tutor-disclaimer {
+  font-size: 10px;
+  color: #758b5d;
+}
+.tutor-bottom-note p {
+  font-size: 10px;
+  color: #73895b;
+}
+.thinking-indicator {
+  font-size: 11px;
+}
+.lab-meta .eyebrow {
+  font-size: 10px;
+}
+.lab-footnote {
+  font-size: 11px;
+  color: #72895a;
+  line-height: 1.7;
+}
+.torque-readout > div > span {
+  font-size: 11px;
+  color: #6b8651;
+}
+.torque-readout > div > strong {
+  font-size: 32px;
+}
+.torque-readout .target-note > strong {
+  font-size: 16px;
+  color: #708b55;
+}
+.model-slider > span:first-child {
+  font-size: 12px;
+  color: #68834d;
+}
+.model-slider strong {
+  font-size: 14px;
+}
+.model-slider strong small {
+  font-size: 11px;
+}
+.range-extents {
+  font-size: 10px;
+  color: #7d9563;
+}
+.model-slider > input {
+  height: 4px;
+  margin-top: 16px;
+}
+.equation-toggle {
+  font-size: 11px;
+  color: #65834a;
+}
+.equation span {
+  font-size: 13px;
+  color: #6f8b53;
+}
+.direction-control > span {
+  font-size: 12px;
+  color: #6c8751;
+}
+.segmented button {
+  font-size: 11px;
+  color: #6b8650;
+}
+.simulation-result small {
+  font-size: 11px;
+  color: #6d8752;
+}
+.simulation-result .button {
+  font-size: 11px;
+}
+.answer-form .button {
+  font-size: 11px;
+}
+.answer-form select,
+.unit-input,
+.unit-input input {
+  font-size: 13px;
+}
+.answer-feedback {
+  font-size: 13px;
+}
+.reflection-form label {
+  font-size: 13px;
+  color: #5e7a44;
+}
+.reflection-form textarea {
+  font-size: 13px;
+}
+.reflection-form textarea::placeholder {
+  color: #839c68;
+}
+.microcopy {
+  font-size: 11px;
+  color: #708858;
+}
+.saved-state p {
+  font-size: 13px;
+  color: #6f8c50;
+}
+.annotation-tools > span,
+.annotation-tools button {
+  font-size: 10px;
+}
+.annotation-editor label {
+  font-size: 11px;
+}
+.annotation-editor select {
+  font-size: 12px;
+}
+.annotation-editor small {
+  font-size: 10px;
+  color: #c0d2a5;
+}
+.pill {
+  font-size: 10px;
+  color: #68864a;
+}
+.course-banner p {
+  font-size: 13px;
+  color: #6f8b52;
+}
+.lecture-note p {
+  font-size: 14px;
+  color: #657f4c;
+}
+.lecture-note .text-button {
+  font-size: 12px;
+}
+.objectives p {
+  font-size: 13px;
+  color: #6b8650;
+}
+.objective-note p {
+  font-size: 11px;
+}
+.notebook-empty p {
+  font-size: 14px;
+  color: #728d53;
+}
+.notebook-meta {
+  font-size: 12px;
+  color: #738d54;
+}
+.notebook-entry blockquote {
+  font-size: 15px;
+  color: #66804d;
+}
+.entry-details {
+  font-size: 11px;
+  color: #718b54;
+}
+.notebook-entry .text-button {
+  font-size: 12px;
+}
+.review-progress {
+  font-size: 10px;
+  color: #718f52;
+}
+.review-card > p {
+  font-size: 14px;
+  color: #6b8651;
+}
+.review-card > h3 {
+  font-size: 15px;
+}
+.review-options > button {
+  font-size: 14px;
+  color: #658446;
+}
+.review-aside > p {
+  font-size: 13px;
+  color: #6d8950;
+}
+.review-stats small {
+  font-size: 11px;
+  color: #78945a;
+}
+.past-reflection > .eyebrow {
+  font-size: 10px;
+}
+.past-reflection details {
+  font-size: 12px;
+  color: #648544;
+}
+.modal-intro {
+  font-size: 14px;
+  color: #69854e;
+}
+.settings-block h3 {
+  font-size: 14px;
+}
+.settings-block > p {
+  font-size: 12px;
+  color: #728b55;
+}
+.mode-options > button > span {
+  font-size: 14px;
+}
+.mode-options > button > p {
+  font-size: 12px;
+  color: #6e8851;
+}
+.privacy-row {
+  font-size: 12px;
+  color: #708950;
+}
+.setup-details,
+.setup-details p {
+  font-size: 12px;
+  color: #658245;
+}
+.setup-details code {
+  font-size: 11px;
+  color: #537535;
+}
+.upload-zone > strong {
+  font-size: 14px;
+  color: #668843;
+}
+.upload-zone > span {
+  font-size: 11px;
+  color: #769554;
+}
+.upload-zone .text-button {
+  font-size: 12px;
+  color: #60823e;
+}
+.upload-or {
+  font-size: 11px;
+  color: #7c9460;
+}
+.demo-file strong {
+  font-size: 13px;
+}
+.demo-file span {
+  font-size: 11px;
+  color: #6e8b4f;
+}
+.analysis-notice {
+  font-size: 12px;
+  color: #8a7b44;
+}
+.analysis-notice .text-button {
+  font-size: 12px;
+  color: #7d6b35;
+}
+.analysis-progress strong {
+  font-size: 12px;
+}
+.analysis-progress small {
+  font-size: 10px;
+  color: #6e8d4e;
+}
+.analysis-complete strong {
+  font-size: 13px;
+}
+.analysis-complete p {
+  font-size: 12px;
+}
+.presentation-steps > button > div > span {
+  font-size: 10px;
+  color: #7c945e;
+}
+.presentation-steps h3 {
+  color: #547535;
+}
+.presentation-steps p {
+  font-size: 13px;
+  color: #6d8950;
+}
+.presentation-actions > .text-button {
+  font-size: 12px;
+}
+.inline-error {
+  font-size: 12px;
+  color: #8c6b38;
+}
+.inline-error .text-button {
+  font-size: 12px;
+}
+.toast {
+  font-size: 13px;
+}
+.invitation-sketch {
+  height: 111px;
+}
+.moment-invitation h2 {
+  font-size: 32px;
+}
+.page-heading {
+  margin-bottom: 28px;
+}
+@media (min-width: 1650px) {
+  .daily-layout {
+    grid-template-columns: minmax(0, 1fr) 295px;
+    gap: 28px;
+  }
+  .moment-invitation {
+    padding: 24px;
+  }
+  .moment-invitation h2 {
+    font-size: 32px;
+  }
+  .investigation-grid {
+    grid-template-columns: minmax(0, 1fr) 342px;
+    gap: 26px;
+  }
+  .section-topline .quiet-label {
+    font-size: 10px;
+  }
+  .moment-row {
+    min-height: 88px;
+  }
+}
+@media (max-width: 1480px) {
+  .topbar {
+    margin-inline: 42px;
+  }
+}
+@media (max-width: 1220px) {
+  .topbar {
+    margin-inline: 27px;
+  }
+  .breadcrumb,
+  .present-button,
+  .connection-status {
+    font-size: 10px;
+  }
+  .sidebar nav > button {
+    font-size: 12px;
+  }
+  .sidebar-course > p,
+  .sidebar-course .text-button {
+    font-size: 10px;
+  }
+  .student-profile strong {
+    font-size: 10px;
+  }
+  .student-profile small {
+    font-size: 9px;
+  }
+  .daily-layout {
+    grid-template-columns: minmax(0, 1fr) 255px;
+  }
+  .moment-invitation h2 {
+    font-size: 29px;
+  }
+  .moment-invitation > p {
+    font-size: 12px;
+  }
+  .invitation-eyebrow > span:last-child {
+    font-size: 8px;
+  }
+  .course-connection h3 {
+    font-size: 13px;
+  }
+  .course-connection > p {
+    font-size: 11px;
+  }
+  .section-heading > span {
+    font-size: 8px;
+  }
+  .section-heading h2 {
+    font-size: 21px;
+  }
+  .moment-row-copy strong {
+    font-size: 13px;
+  }
+  .moment-row-copy small {
+    font-size: 10px;
+  }
+  .chat-message p {
+    font-size: 13px;
+  }
+  .chat-message.user p {
+    font-size: 12px;
+  }
+  .tutor-heading h2 {
+    font-size: 12px;
+  }
+  .tutor-heading > div > span {
+    font-size: 9px;
+  }
+  .tutor-context {
+    font-size: 9px;
+  }
+  .prediction-options button {
+    font-size: 11px;
+  }
+  .task-label > small {
+    font-size: 9px;
+  }
+  .evidence-ledger strong {
+    font-size: 11px;
+  }
+  .evidence-ledger small {
+    font-size: 9px;
+  }
+}
+@media (max-width: 1020px) {
+  .sidebar nav > button {
+    font-size: 0;
+  }
+  .settings-button {
+    font-size: 0;
+  }
+}
+@media (max-width: 800px) {
+  .topbar {
+    margin-inline: 22px;
+  }
+  .daily-layout {
+    grid-template-columns: 1fr;
+  }
+  .day-rail {
+    grid-template-columns: 1.1fr 1fr;
+  }
+  .tutor-panel {
+    min-height: 520px;
+  }
+  .tutor-heading h2 {
+    font-size: 14px;
+  }
+  .chat-message p {
+    font-size: 14px;
+  }
+  .chat-message.user p {
+    font-size: 13px;
+  }
+  .learning-path > div {
+    font-size: 10px;
+  }
+  .learning-path > div > span {
+    width: 23px;
+    height: 23px;
+    font-size: 9px;
+  }
+  .page-heading > div > p {
+    font-size: 12px;
+  }
+}
+@media (max-width: 560px) {
+  .topbar {
+    margin-inline: 19px;
+  }
+  .breadcrumb {
+    font-size: 10px;
+  }
+  .connection-status,
+  .present-button {
+    font-size: 10px;
+  }
+  .page-heading > div > p {
+    font-size: 13px;
+    max-width: 320px;
+  }
+  .page-heading .button {
+    font-size: 11px;
+  }
+  .section-topline strong {
+    font-size: 12px;
+  }
+  .source-tag {
+    font-size: 9px;
+  }
+  .day-rail {
+    grid-template-columns: 1fr;
+  }
+  .recording-caption > span,
+  .recording-caption .text-button {
+    font-size: 9px;
+  }
+  .section-heading h2 {
+    font-size: 21px;
+  }
+  .section-heading > span {
+    font-size: 7px;
+  }
+  .moment-row-copy strong {
+    font-size: 12px;
+  }
+  .moment-row-copy small {
+    font-size: 10px;
+  }
+  .moment-timestamp {
+    font-size: 10px;
+  }
+  .moment-row {
+    min-height: 84px;
+  }
+  .moment-invitation h2 {
+    font-size: 33px;
+  }
+  .moment-invitation > p {
+    font-size: 13px;
+  }
+  .invitation-eyebrow > span:last-child {
+    font-size: 9px;
+  }
+  .save-later {
+    font-size: 11px;
+  }
+  .course-connection h3 {
+    font-size: 14px;
+  }
+  .course-connection > p {
+    font-size: 13px;
+  }
+  .course-connection .text-button {
+    font-size: 12px;
+  }
+  .learning-path {
+    gap: 9px;
+  }
+  .learning-path > div {
+    font-size: 9px;
+    gap: 5px;
+  }
+  .learning-path > div > span {
+    font-size: 8px;
+    width: 21px;
+    height: 21px;
+  }
+  .workspace-tabs button {
+    font-size: 11px;
+  }
+  .lab-meta .eyebrow {
+    font-size: 9px;
+  }
+  .lab-meta .source-tag {
+    font-size: 8px;
+  }
+  .learning-task h2 {
+    font-size: 23px;
+  }
+  .task-label > span {
+    font-size: 9px;
+  }
+  .task-label > small {
+    font-size: 9px;
+  }
+  .prediction-options button {
+    font-size: 11px;
+  }
+  .evidence-ledger strong {
+    font-size: 12px;
+  }
+  .evidence-ledger small {
+    font-size: 10px;
+  }
+  .page-intro {
+    font-size: 13px;
+  }
+  .course-banner h2 {
+    font-size: 23px;
+  }
+  .course-banner p {
+    font-size: 11px;
+  }
+  .lecture-note p {
+    font-size: 13px;
+  }
+  .notebook-entry blockquote {
+    font-size: 14px;
+  }
+  .entry-details {
+    font-size: 10px;
+  }
+  .review-card > p {
+    font-size: 13px;
+  }
+  .review-card > h3 {
+    font-size: 14px;
+  }
+  .review-options > button {
+    font-size: 13px;
+  }
+  .review-progress {
+    font-size: 9px;
+  }
+  .modal-intro {
+    font-size: 13px;
+  }
+  .modal .eyebrow {
+    font-size: 10px;
+  }
+  .presentation-steps p {
+    font-size: 12px;
+  }
+  .presentation-actions > .text-button {
+    font-size: 11px;
+  }
+  .modal .microcopy {
+    font-size: 11px;
+  }
+  .privacy-row {
+    font-size: 12px;
+  }
+  .mode-options > button > span {
+    font-size: 13px;
+  }
+  .mode-options > button > p {
+    font-size: 12px;
+  }
+  .setup-details,
+  .setup-details p {
+    font-size: 12px;
+  }
+  .upload-zone > strong {
+    font-size: 13px;
+  }
+  .upload-zone > span {
+    font-size: 10px;
+  }
+  .demo-file strong {
+    font-size: 12px;
+  }
+  .demo-file span {
+    font-size: 10px;
+  }
+  .toast {
+    font-size: 12px;
+  }
+  .annotation-tools > span,
+  .annotation-tools button {
+    font-size: 9px;
+  }
+}

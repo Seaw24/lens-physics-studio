@@ -1,0 +1,391 @@
+.portrait-video {
+  background-size: cover;
+  background-position: center;
+  isolation: isolate;
+}
+.portrait-video::before {
+  content: "";
+  position: absolute;
+  inset: -25px;
+  background: inherit;
+  filter: blur(22px) brightness(0.38) saturate(0.6);
+  z-index: 0;
+}
+.portrait-video video {
+  position: relative;
+  background: transparent;
+  z-index: 1;
+}
+.portrait-video .center-play,
+.portrait-video .annotation-layer {
+  z-index: 2;
+}
+.portrait-video .annotation-tools {
+  z-index: 3;
+}
+.portrait-video .video-error {
+  z-index: 4;
+}
+.basketball-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.invitation-sketch {
+  height: 124px;
+  overflow: hidden;
+  border-radius: 5px;
+  margin: 18px 0;
+}
+.invitation-sketch .basketball-art {
+  border-radius: 5px;
+}
+.projectile-diagram {
+  width: 100%;
+  display: block;
+  height: auto;
+}
+.flight-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 20px 17px;
+}
+.flight-controls .button {
+  font-size: 11px;
+  min-height: 36px;
+  padding: 9px 12px;
+}
+.flight-controls > .icon-button {
+  margin-left: auto;
+  color: #769658;
+}
+.flight-controls .apex-active {
+  background: #e2eccf;
+  border-color: #a3bb80;
+  color: #5d7c42;
+}
+.flight-scrubber {
+  display: block;
+  padding: 0 21px 19px;
+}
+.flight-scrubber > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #7b9462;
+  font-size: 11px;
+}
+.flight-scrubber strong {
+  font-weight: 550;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #617e49;
+}
+.flight-scrubber input {
+  width: 100%;
+  height: 4px;
+  margin: 12px 0 0;
+  display: block;
+}
+.projectile-readouts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-block: 1px solid #dce7ce;
+  background: #edf3e1;
+  padding: 17px 14px;
+}
+.projectile-readouts > div {
+  padding: 0 12px;
+  border-right: 1px solid #d6e2c6;
+}
+.projectile-readouts > div:last-child {
+  border-right: 0;
+}
+.projectile-readouts small {
+  display: block;
+  font-size: 10px;
+  color: #78935c;
+}
+.projectile-readouts strong {
+  display: block;
+  font-family: var(--serif);
+  font-size: 25px;
+  color: #496a34;
+  line-height: 1.5;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.projectile-readouts strong > span {
+  font-family: "DM Sans Variable", sans-serif;
+  font-size: 10px;
+  color: #789759;
+  font-weight: 400;
+}
+.projectile-readouts em {
+  font-size: 10px;
+  font-style: normal;
+  color: #77955a;
+}
+.projectile-readouts .apex-readout {
+  background: #ddebc9;
+  border-radius: 4px;
+  margin: -7px 0;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+.apex-readout em {
+  color: #4f772e;
+  font-weight: 550;
+}
+.shot-sliders {
+  padding: 23px 22px 15px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+}
+.shot-sliders .model-slider > span:first-child {
+  font-size: 10px;
+}
+.shot-sliders .model-slider strong {
+  font-size: 12px;
+}
+.shot-sliders .model-slider strong small {
+  font-size: 10px;
+}
+.vector-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 20px;
+  font-size: 10px;
+  color: #77945a;
+}
+.vector-toggle button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  padding: 0;
+}
+.vector-toggle button > span {
+  border: 1px solid #b9cea1;
+  background: #f7faef;
+  border-radius: 3px;
+  width: 15px;
+  height: 15px;
+  line-height: 13px;
+  text-align: center;
+  font-size: 11px;
+}
+.vector-toggle button > .checked {
+  background: #e5efda;
+  color: #658849;
+}
+.vector-toggle > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.frame-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #bccdab;
+  background: #29442f;
+  padding: 9px 13px;
+  border-top: 1px solid #a9c28a22;
+  font-size: 9px;
+}
+.frame-controls > span {
+  flex: 1;
+  font-size: 9px;
+  line-height: 1.6;
+}
+.frame-controls button {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  white-space: nowrap;
+  padding: 5px;
+  background: #b8d09110;
+  border-radius: 4px;
+}
+.wrench-art {
+  height: 145px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #e9eddf;
+}
+.wrench-art > .basketball-art {
+  height: 200px;
+  max-width: 360px;
+  transform: translateY(-4px);
+}
+.review-options > button {
+  font-size: 12px;
+}
+.projectile-lab .lab-footnote {
+  font-size: 10px;
+  padding-top: 9px;
+}
+.recording-caption {
+  align-items: flex-start;
+}
+.sidebar-course > p {
+  line-height: 1.7;
+}
+@media (max-width: 1220px) {
+  .projectile-readouts {
+    padding: 14px 6px;
+  }
+  .projectile-readouts > div {
+    padding: 0 9px;
+  }
+  .projectile-readouts small {
+    font-size: 8px;
+  }
+  .projectile-readouts strong {
+    font-size: 21px;
+  }
+  .projectile-readouts strong > span {
+    font-size: 8px;
+  }
+  .projectile-readouts em {
+    font-size: 8px;
+  }
+  .shot-sliders {
+    gap: 17px;
+    padding: 21px 17px 12px;
+    grid-template-columns: 1fr 1fr;
+  }
+  .shot-sliders .model-slider:last-child {
+    grid-column: 1/-1;
+  }
+  .frame-controls > span {
+    font-size: 8px;
+  }
+  .flight-controls {
+    padding-inline: 16px;
+  }
+  .flight-controls .button {
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+}
+@media (max-width: 800px) {
+  .projectile-readouts small {
+    font-size: 10px;
+  }
+  .projectile-readouts strong {
+    font-size: 28px;
+  }
+  .projectile-readouts strong > span {
+    font-size: 10px;
+  }
+  .projectile-readouts em {
+    font-size: 10px;
+  }
+  .shot-sliders {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .shot-sliders .model-slider:last-child {
+    grid-column: auto;
+  }
+}
+@media (max-width: 560px) {
+  .projectile-readouts {
+    padding: 15px 5px;
+  }
+  .projectile-readouts > div {
+    padding: 0 8px;
+  }
+  .projectile-readouts small {
+    font-size: 9px;
+    min-height: 28px;
+    max-width: 90px;
+  }
+  .projectile-readouts strong {
+    font-size: 22px;
+    line-height: 1.5;
+  }
+  .projectile-readouts strong > span {
+    font-size: 8px;
+  }
+  .projectile-readouts em {
+    font-size: 8px;
+  }
+  .flight-controls {
+    padding: 4px 13px 16px;
+    gap: 7px;
+  }
+  .flight-controls .button {
+    font-size: 10px;
+    padding: 8px 9px;
+    gap: 5px;
+  }
+  .flight-controls .button svg {
+    width: 13px;
+  }
+  .flight-controls > .icon-button {
+    width: 23px;
+  }
+  .flight-scrubber {
+    padding: 0 16px 17px;
+  }
+  .shot-sliders {
+    grid-template-columns: 1fr;
+    padding: 21px 17px 14px;
+    gap: 25px;
+  }
+  .shot-sliders .model-slider > span:first-child {
+    font-size: 12px;
+  }
+  .shot-sliders .model-slider strong {
+    font-size: 14px;
+  }
+  .vector-toggle {
+    font-size: 9px;
+    padding: 9px 15px;
+  }
+  .vector-toggle button {
+    font-size: 9px;
+  }
+  .frame-controls {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .frame-controls > span {
+    font-size: 8px;
+    min-width: 150px;
+    max-width: 65%;
+  }
+  .frame-controls button {
+    font-size: 9px;
+  }
+  .player-controls {
+    gap: 3px;
+  }
+  .player-controls select {
+    width: 42px;
+    font-size: 9px;
+  }
+  .player-controls .time-readout {
+    font-size: 9px;
+  }
+  .review-options {
+    flex-direction: column;
+  }
+  .review-options > button {
+    min-height: 43px;
+    font-size: 13px;
+  }
+  .invitation-sketch {
+    width: 100%;
+    max-width: 280px;
+    height: 142px;
+  }
+}
