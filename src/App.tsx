@@ -41,6 +41,7 @@ import {
   type ServiceStatus,
 } from "./api";
 import Investigation from "./CoachedInvestigation";
+import CourseDiagnostic from "./CourseDiagnostic";
 import Guide from "./Guide";
 import VideoPlayer from "./VideoPlayer";
 import { BasketballArt } from "./Projectile";
@@ -857,9 +858,9 @@ export default function App() {
                 <em>A world of possibilities.</em>
               </h1>
               <p className="page-intro">
-                One fixed lesson, connected to a real basketball clip. Predict
-                the force, explore the trajectory, and make the explanation your
-                own.
+                Start from the material your class is actually using. Lens maps
+                the unit, checks the prerequisite ideas, and builds a learning
+                route before the first explanation.
               </p>
               <div className="course-banner">
                 <div className="course-book">
@@ -874,6 +875,15 @@ export default function App() {
                 </div>
                 <span className="course-week">04</span>
               </div>
+              <CourseDiagnostic
+                bedrockAvailable={Boolean(status?.configured)}
+                onOpenSettings={() => setModal("settings")}
+                onStartLesson={() => {
+                  if (!isDemo) useDemo();
+                  setSelected("shot");
+                  navigate("investigate");
+                }}
+              />
               <div className="course-content">
                 <section>
                   <div className="section-heading">
@@ -1194,6 +1204,14 @@ export default function App() {
                     <p>
                       Your notebook is stored in this browser. The prototype has
                       no account system or cross-device sync.
+                    </p>
+                  </div>
+                  <div className="privacy-row">
+                    <BookOpen size={19} />
+                    <p>
+                      Course PDFs are sent through this local server to Bedrock
+                      for analysis, then discarded. The resulting course map and
+                      diagnostic are stored in this browser; the PDF is not.
                     </p>
                   </div>
                 </div>
