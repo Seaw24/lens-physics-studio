@@ -1,5 +1,5 @@
 :root {
-  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  font-family: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
   color: #253e32;
   background: #f8f8f2;
   font-synthesis: none;
@@ -11,6 +11,9 @@
   --deep: #233f2d;
   --line: #e0e4d7;
   --accent: #dce8b1;
+  --hot: #d8651f;
+  --hot-deep: #b8501a;
+  --hot-ink: #fff4ea;
   --serif: "Fraunces Variable", Georgia, serif;
   font-weight: 400;
   font-size: 14px;
@@ -451,11 +454,14 @@ main {
   min-height: 40px;
 }
 .button.primary {
-  background: #2c513b;
-  color: #f8faed;
+  background: var(--hot);
+  color: var(--hot-ink);
+  box-shadow: 0 6px 18px #d8651f33;
 }
 .button.primary:hover:not(:disabled) {
-  background: #3c6545;
+  background: var(--hot-deep);
+  box-shadow: 0 8px 22px #d8651f45;
+  transform: translateY(-1px);
 }
 .button.secondary {
   background: #fbfcf4;
@@ -1562,12 +1568,12 @@ main {
   max-height: 320px;
 }
 .svg-small {
-  font-family: "DM Sans Variable", sans-serif;
+  font-family: "Source Code Pro", ui-monospace, Menlo, monospace;
   font-size: 10px;
   fill: #889775;
 }
 .svg-label {
-  font-family: "DM Sans Variable", sans-serif;
+  font-family: "Source Code Pro", ui-monospace, Menlo, monospace;
   font-size: 13px;
   fill: #5b7850;
 }
@@ -1624,8 +1630,8 @@ main {
 }
 .simulation-result strong span {
   font:
-    10px "DM Sans Variable",
-    sans-serif;
+    10px "Source Code Pro",
+    monospace;
   color: #81986a;
 }
 .simulation-result .button {
@@ -1669,7 +1675,7 @@ main {
   display: block;
 }
 .torque-readout strong > small {
-  font-family: "DM Sans Variable", sans-serif;
+  font-family: "Source Code Pro", ui-monospace, Menlo, monospace;
   font-size: 11px;
   color: #839665;
   font-weight: 400;
@@ -2931,7 +2937,7 @@ main {
 }
 .review-stats small {
   display: block;
-  font-family: "DM Sans Variable", sans-serif;
+  font-family: "Source Code Pro", ui-monospace, Menlo, monospace;
   font-size: 8px;
   color: #9bab85;
   line-height: 1.7;
@@ -3722,8 +3728,8 @@ details summary {
   .profile-dot {
     display: none;
   }
-  .brand .lens-mark {
-    transform: scale(0.9);
+  .brand .momentum-mark {
+    transform: scale(0.8);
   }
   .sidebar nav {
     margin-top: 42px;

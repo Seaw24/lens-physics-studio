@@ -1,4 +1,4 @@
-# Lens — the physics of a basketball shot
+# Momentum — physics from any recording
 
 A working hackathon prototype that turns a real basketball clip into a learning loop: observe, predict, experiment, explain, and recall.
 
@@ -34,7 +34,7 @@ After a build, `npm start` serves the compiled site and API together at http://1
 
 **Present demo** contains a short presentation guide. **Replay discovery** demonstrates a prepared prompt after the shot. Toggle **I'm busy** to defer it. This is an explicit availability control, not inferred attention, gaze tracking, or a live detector.
 
-**Guide & about** introduces the website, walks through the learning loop, explains the separate roles of the coach and lounge, and offers a downloadable product brief (`public/lens-product-brief.md`). The guide also describes the limitations and how to replay, change speed, and preserve work.
+**Guide & about** introduces the website, walks through the learning loop, explains the separate roles of the coach and lounge, and offers a downloadable product brief (`public/momentum-product-brief.md`). The guide also describes the limitations and how to replay, change speed, and preserve work.
 
 ## What is real, prepared, and hypothetical
 

@@ -137,7 +137,7 @@ export default function PhysicsLounge({
             <div key={i} className={`chat-message ${m.role}`}>
               {m.role === "assistant" && (
                 <span className="message-source">
-                  LENS<span>{m.mode}</span>
+                  MOMENTUM<span>{m.mode}</span>
                 </span>
               )}
               <p>{m.content}</p>

@@ -27,7 +27,7 @@ export default function Guide({
     },
     {
       title: "Watch once. Then think with your coach.",
-      body: "The whole shot plays first. Lens returns to a teaching frame and asks a question inside the player. Choose an answer, check it, and see physics arrows appear on the real footage.",
+      body: "The whole shot plays first. Momentum returns to a teaching frame and asks a question inside the player. Choose an answer, check it, and see physics arrows appear on the real footage.",
       icon: Pause,
       detail: "Use Replay whenever you want to see the full event again",
     },
@@ -48,14 +48,14 @@ export default function Guide({
     <div className="guide-page page-enter">
       <div className="guide-hero">
         <div>
-          <span className="eyebrow">A QUICK INTRODUCTION TO LENS</span>
+          <span className="eyebrow">A QUICK INTRODUCTION TO MOMENTUM</span>
           <h1>
             See a moment.
             <br />
             <em>Keep the understanding.</em>
           </h1>
           <p>
-            Lens connects the physics in your course to the world in front of
+            Momentum connects the physics in your course to the world in front of
             you. A real video becomes a small, guided lesson—with a pause, a
             question, and an experiment you can make your own.
           </p>
@@ -232,7 +232,7 @@ export default function Guide({
         </details>
         <details>
           <summary>
-            How does Lens know when to ask?
+            How does Momentum know when to ask?
             <ChevronDown size={16} />
           </summary>
           <p>
@@ -252,7 +252,7 @@ export default function Guide({
             the prototype demonstrates.
           </p>
         </div>
-        <a className="button secondary" href="/lens-product-brief.md" download>
+        <a className="button secondary" href="/momentum-product-brief.md" download>
           <ArrowDownToLine size={16} /> Download the brief
         </a>
       </footer>

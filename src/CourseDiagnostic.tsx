@@ -227,7 +227,7 @@ export default function CourseDiagnostic({
     const content = draft.trim();
     if (content.length < 80) {
       setMaterialError(
-        "Paste at least a short paragraph so Lens has enough course language to map.",
+        "Paste at least a short paragraph so Momentum has enough course language to map.",
       );
       return;
     }
@@ -373,7 +373,7 @@ export default function CourseDiagnostic({
             <h2>A route built around what you need next.</h2>
             <p>
               This is evidence from one short check—not a permanent mastery
-              label. Lens will update the route as you practice and explain.
+              label. Momentum will update the route as you practice and explain.
             </p>
           </div>
           <div className="results-heading-actions">
@@ -484,7 +484,7 @@ export default function CourseDiagnostic({
           <div className="eyebrow">DIAGNOSE BEFORE TEACHING</div>
           <h2>Your course sets the starting line.</h2>
           <p>
-            Lens maps the ideas and prerequisites in your material, then checks
+            Momentum maps the ideas and prerequisites in your material, then checks
             the few skills that matter for your next lesson.
           </p>
         </div>
@@ -590,7 +590,7 @@ export default function CourseDiagnostic({
             <div className="diagnostic-section-title">
               <div>
                 <BookOpenCheck size={18} />
-                <h3>Lens found in your material</h3>
+                <h3>Momentum found in your material</h3>
               </div>
               <span>
                 {sources.length} source{sources.length === 1 ? "" : "s"}
