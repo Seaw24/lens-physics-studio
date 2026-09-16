@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import {
   CourseModelOutputError,
   NotPhysicsCourseError,
+  classifyCourseError,
   courseOutputConfig,
   parseCourseAnalysisText,
+  safeCourseErrorDetails,
 } from "../server/courseAnalysis";
 
 function validAnalysis() {
@@ -83,3 +85,24 @@ test("Opus 4.6 uses Bedrock structured output while Nova keeps prompt JSON", () 
   assert.equal(courseOutputConfig("amazon.nova-lite-v1:0"), undefined);
 });
 
+test("course failures distinguish PDF rendering from Bedrock networking", () => {
+  const renderError = new Error("renderer failed");
+  renderError.name = "PdfRenderError";
+  assert.deepEqual(classifyCourseError(renderError), {
+    status: 422,
+    code: "PDF_RENDER_FAILED",
+    message:
+      "This PDF could not be rendered. Try exporting a fresh PDF without password protection.",
+  });
+
+  const dnsCause = Object.assign(new Error("lookup failed"), {
+    code: "ENOTFOUND",
+  });
+  const networkError = new Error("The pending stream was canceled", {
+    cause: dnsCause,
+  });
+  const classified = classifyCourseError(networkError);
+  assert.equal(classified.status, 503);
+  assert.equal(classified.code, "BEDROCK_NETWORK");
+  assert.equal(safeCourseErrorDetails(networkError).causeCode, "ENOTFOUND");
+});

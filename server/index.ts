@@ -1,22 +1,23 @@
 import "dotenv/config";
-import { execFile } from "node:child_process";
+import { createCanvas } from "@napi-rs/canvas";
 import express from "express";
-import os from "node:os";
 import path from "node:path";
 import fs from "node:fs";
-import { promisify } from "node:util";
 import {
   BedrockRuntimeClient,
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { z } from "zod";
 import { COURSE, rehearsalReply } from "../shared/physics";
 import { generalPhysicsReply } from "../shared/generalTutor";
 import {
   CourseModelOutputError,
   NotPhysicsCourseError,
+  classifyCourseError,
   courseOutputConfig,
   parseCourseAnalysisText,
+  safeCourseErrorDetails,
 } from "./courseAnalysis";
 
 const app = express();
@@ -34,8 +35,8 @@ const configured =
     process.env.AWS_WEB_IDENTITY_TOKEN_FILE,
   );
 const client = new BedrockRuntimeClient({ region, maxAttempts: 2 });
-const execFileAsync = promisify(execFile);
 const maxRenderedPdfBytes = 18 * 1024 * 1024;
+const maxRenderedPageBytes = 3.5 * 1024 * 1024;
 const maxRenderedPdfPages = 10;
 app.disable("x-powered-by");
 app.use(express.json({ limit: "24mb" }));
@@ -73,6 +74,8 @@ app.use("/api", (req, res, next) => {
 });
 function publicError(error: unknown) {
   const name = error instanceof Error ? error.name : "";
+  if (/PdfTooManyPages/.test(name))
+    return "Choose a PDF with 10 pages or fewer for this model.";
   if (/PdfTooLarge/.test(name))
     return "This PDF is too detailed to prepare for the selected model. Try a shorter or lower-resolution file.";
   if (/PdfRender/.test(name))
@@ -136,40 +139,52 @@ function needsPdfImageFallback() {
   return modelId.includes("anthropic.claude");
 }
 async function renderPdfPages(pdf: Buffer) {
-  const directory = await fs.promises.mkdtemp(path.join(os.tmpdir(), "lens-pdf-"));
-  const source = path.join(directory, "course.pdf");
-  const prefix = path.join(directory, "page");
+  const loadingTask = getDocument({
+    data: new Uint8Array(pdf),
+    disableWorker: true,
+    useSystemFonts: true,
+    isEvalSupported: false,
+    useWasm: false,
+  } as any);
   try {
-    await fs.promises.writeFile(source, pdf);
-    await execFileAsync(
-      "pdftoppm",
-      [
-        "-f",
-        "1",
-        "-l",
-        String(maxRenderedPdfPages),
-        "-r",
-        "120",
-        "-png",
-        source,
-        prefix,
-      ],
-      { timeout: 30_000, maxBuffer: 2 * 1024 * 1024 },
-    );
-    const files = (await fs.promises.readdir(directory))
-      .filter((file) => /^page-\d+\.png$/.test(file))
-      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    const document = await loadingTask.promise;
+    if (document.numPages > maxRenderedPdfPages) {
+      const error = new Error("PDF has too many pages");
+      error.name = "PdfTooManyPages";
+      throw error;
+    }
     let total = 0;
     const pages: Buffer[] = [];
-    for (const file of files) {
-      const page = await fs.promises.readFile(path.join(directory, file));
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
+      const pdfPage = await document.getPage(pageNumber);
+      const viewport = pdfPage.getViewport({ scale: 1.25 });
+      const canvas = createCanvas(
+        Math.ceil(viewport.width),
+        Math.ceil(viewport.height),
+      );
+      try {
+        await pdfPage.render({
+          canvas: canvas as any,
+          canvasContext: canvas.getContext("2d") as any,
+          viewport,
+          background: "#ffffff",
+        }).promise;
+      } finally {
+        pdfPage.cleanup();
+      }
+      const page = canvas.toBuffer("image/png");
+      if (page.length > maxRenderedPageBytes) {
+        const error = new Error("A rendered PDF page is too large");
+        error.name = "PdfTooLarge";
+        throw error;
+      }
       total += page.length;
       if (total > maxRenderedPdfBytes) {
         const error = new Error("Rendered PDF is too large");
         error.name = "PdfTooLarge";
         throw error;
       }
-      pages.push(page);
+      pages.push(Buffer.from(page));
     }
     if (!pages.length) {
       const error = new Error("No PDF pages rendered");
@@ -177,8 +192,15 @@ async function renderPdfPages(pdf: Buffer) {
       throw error;
     }
     return pages;
+  } catch (error) {
+    if (error instanceof Error && /^Pdf/.test(error.name)) throw error;
+    const wrapped = new Error("The project PDF renderer failed", {
+      cause: error,
+    });
+    wrapped.name = "PdfRenderError";
+    throw wrapped;
   } finally {
-    await fs.promises.rm(directory, { recursive: true, force: true });
+    await loadingTask.destroy().catch(() => undefined);
   }
 }
 app.get("/api/status", (_req, res) =>
@@ -420,33 +442,15 @@ app.post("/api/analyze-course", async (req, res) => {
       });
       return;
     }
-    const name = error instanceof Error ? error.name : "UnknownError";
-    const metadata = (error as { $metadata?: { requestId?: string } })
-      ?.$metadata;
-    const issuePaths =
-      error instanceof CourseModelOutputError ? error.issuePaths : [];
-    console.warn("Course PDF analysis failed", {
-      name,
-      requestId: metadata?.requestId,
-      issuePaths,
+    console.warn(
+      "Course PDF analysis failed",
+      safeCourseErrorDetails(error),
+    );
+    const failure = classifyCourseError(error);
+    res.status(failure.status).json({
+      error: failure.message,
+      code: failure.code,
     });
-    if (error instanceof CourseModelOutputError) {
-      res.status(502).json({
-        error:
-          "Bedrock returned an incomplete course map. Please try the PDF once more.",
-        code: "MODEL_OUTPUT_INVALID",
-      });
-      return;
-    }
-    if (/Timeout|Abort/.test(name)) {
-      res.status(504).json({
-        error:
-          "Bedrock took too long to analyze this PDF. Please try again shortly.",
-        code: "BEDROCK_TIMEOUT",
-      });
-      return;
-    }
-    res.status(502).json({ error: publicError(error), code: "BEDROCK_ERROR" });
   }
 });
 const frameSchema = z.object({

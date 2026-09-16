@@ -535,7 +535,7 @@ export default function CourseDiagnostic({
               <button onClick={() => fileInput.current?.click()}>
                 <Upload size={24} />
                 <strong>Analyze a course PDF</strong>
-                <span>PDF · one file · up to 15 MB</span>
+                <span>PDF · one file · up to 15 MB · 10 pages with Claude</span>
               </button>
             ) : (
               <button onClick={onOpenSettings}>
@@ -547,9 +547,9 @@ export default function CourseDiagnostic({
             <div className="material-privacy">
               <ShieldCheck size={16} />
               <span>
-                The PDF is processed by the local server and sent to Amazon
-                Bedrock as a document or rendered pages, then discarded. Only
-                the course map and diagnostic are stored in this browser.
+                The local server sends the PDF or in-memory rendered pages to
+                Amazon Bedrock, then discards them. Only the course map and
+                diagnostic are stored in this browser.
               </span>
             </div>
           </div>

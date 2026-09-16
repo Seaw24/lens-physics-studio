@@ -65,6 +65,105 @@ export class NotPhysicsCourseError extends Error {
   }
 }
 
+type ErrorLike = Error & {
+  code?: string;
+  killed?: boolean;
+  signal?: string;
+  cause?: unknown;
+  $metadata?: { requestId?: string };
+};
+
+function errorLike(value: unknown): ErrorLike | undefined {
+  return value instanceof Error ? (value as ErrorLike) : undefined;
+}
+
+export function safeCourseErrorDetails(error: unknown) {
+  const outer = errorLike(error);
+  const cause = errorLike(outer?.cause);
+  return {
+    name: outer?.name || "UnknownError",
+    message: (outer?.message || "Unknown failure").slice(0, 240),
+    code: outer?.code,
+    causeCode: cause?.code,
+    killed: outer?.killed,
+    signal: outer?.signal,
+    requestId: outer?.$metadata?.requestId,
+    issuePaths:
+      error instanceof CourseModelOutputError ? error.issuePaths : [],
+  };
+}
+
+export function classifyCourseError(error: unknown) {
+  const details = safeCourseErrorDetails(error);
+  const codeText = `${details.code || ""} ${details.causeCode || ""} ${details.message}`;
+  if (/PdfTooManyPages/.test(details.name))
+    return {
+      status: 422,
+      code: "PDF_TOO_MANY_PAGES",
+      message: "Choose a PDF with 10 pages or fewer for this model.",
+    };
+  if (/PdfTooLarge/.test(details.name))
+    return {
+      status: 422,
+      code: "PDF_RENDER_TOO_LARGE",
+      message:
+        "This PDF is too detailed to prepare for the selected model. Try a shorter or lower-resolution file.",
+    };
+  if (/PdfRender/.test(details.name))
+    return {
+      status: 422,
+      code: "PDF_RENDER_FAILED",
+      message:
+        "This PDF could not be rendered. Try exporting a fresh PDF without password protection.",
+    };
+  if (error instanceof CourseModelOutputError)
+    return {
+      status: 502,
+      code: "MODEL_OUTPUT_INVALID",
+      message:
+        "Bedrock returned an incomplete course map. Please try the PDF once more.",
+    };
+  if (/ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ENETUNREACH/.test(codeText))
+    return {
+      status: 503,
+      code: "BEDROCK_NETWORK",
+      message:
+        "The local server could not reach Amazon Bedrock. Check the network or DNS connection, then try again.",
+    };
+  if (/Timeout|Abort|ETIMEDOUT/.test(`${details.name} ${codeText}`))
+    return {
+      status: 504,
+      code: "BEDROCK_TIMEOUT",
+      message:
+        "Bedrock took too long to analyze this PDF. Please try again shortly.",
+    };
+  if (/Throttl/.test(details.name))
+    return {
+      status: 503,
+      code: "BEDROCK_BUSY",
+      message: "Bedrock is busy. Please try again shortly.",
+    };
+  if (/AccessDenied|Unrecognized|Expired|Credentials|Unauthorized/.test(details.name))
+    return {
+      status: 503,
+      code: "BEDROCK_AUTH",
+      message:
+        "AWS access is unavailable or has expired. Refresh the workshop credentials, then restart the server.",
+    };
+  if (/Validation|ResourceNotFound/.test(details.name))
+    return {
+      status: 502,
+      code: "BEDROCK_MODEL",
+      message:
+        "This model is not available with the current account or region. Check BEDROCK_MODEL_ID.",
+    };
+  return {
+    status: 502,
+    code: "BEDROCK_ERROR",
+    message: "The AI request could not finish. Please try again.",
+  };
+}
+
 function extractJson(text: string) {
   const trimmed = text.trim();
   if (!trimmed) throw new CourseModelOutputError("The model returned no text.");
@@ -191,4 +290,3 @@ export function courseOutputConfig(model: string) {
     },
   } as const;
 }
-
