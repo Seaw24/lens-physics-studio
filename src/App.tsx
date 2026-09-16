@@ -1209,9 +1209,10 @@ export default function App() {
                   <div className="privacy-row">
                     <BookOpen size={19} />
                     <p>
-                      Course PDFs are sent through this local server to Bedrock
-                      for analysis, then discarded. The resulting course map and
-                      diagnostic are stored in this browser; the PDF is not.
+                      Course PDFs are processed by this local server, then sent
+                      to Bedrock as a document or rendered pages and discarded
+                      after analysis. The resulting course map and diagnostic
+                      are stored in this browser; the PDF is not.
                     </p>
                   </div>
                 </div>

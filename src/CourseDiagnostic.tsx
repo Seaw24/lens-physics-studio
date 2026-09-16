@@ -522,7 +522,7 @@ export default function CourseDiagnostic({
                 <span>
                   {pdfStage === "reading"
                     ? "The file is still on this device"
-                    : "Reading text, diagrams, topics, and prerequisites"}
+                    : "Reading pages, topics, and prerequisites — the first run can take a minute"}
                 </span>
                 <button
                   className="text-button"
@@ -547,9 +547,9 @@ export default function CourseDiagnostic({
             <div className="material-privacy">
               <ShieldCheck size={16} />
               <span>
-                PDF bytes are sent through the local server to Amazon Bedrock,
-                then discarded. Only the course map and diagnostic are stored in
-                this browser.
+                The PDF is processed by the local server and sent to Amazon
+                Bedrock as a document or rendered pages, then discarded. Only
+                the course map and diagnostic are stored in this browser.
               </span>
             </div>
           </div>
