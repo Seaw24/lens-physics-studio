@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   BrainCircuit,
+  Cable,
   LoaderCircle,
+  Monitor,
+  QrCode,
   Radar,
   ShieldCheck,
   UploadCloud,
@@ -26,7 +29,7 @@ function readActiveRun(): ActiveRun | null {
   try {
     const value = JSON.parse(localStorage.getItem(ACTIVE_KEY) || "null");
     return typeof value?.id === "string" &&
-      ["image", "video", "phone", "wired"].includes(value.kind) &&
+      ["image", "video", "phone", "wired", "screen"].includes(value.kind) &&
       typeof value.startedAt === "number"
       ? value
       : null;
@@ -142,7 +145,8 @@ export default function DiscoveryWorkspace() {
   /** One step from source to running analysis: create, upload, start. */
   async function run(kind: LaunchSource["kind"], file: File | null) {
     if (launch) return;
-    const live = kind === "phone" || kind === "wired";
+    const live =
+      kind === "phone" || kind === "wired" || kind === "screen";
     if (!live && !file) return;
     if (file?.type && kind === "video" && !file.type.startsWith("video/")) {
       setError("That file is not a video. Choose an MP4, MOV, or WebM.");
@@ -165,7 +169,7 @@ export default function DiscoveryWorkspace() {
     let created: SessionSnapshot | null = null;
     try {
       created = await discoveryApi.createSession(
-        kind === "wired" ? "phone" : kind,
+        kind === "wired" || kind === "screen" ? "phone" : kind,
         live ? "live" : kind === "image" ? "scan" : mode,
         idempotencyKey(),
       );
@@ -345,6 +349,49 @@ export default function DiscoveryWorkspace() {
                 if (chosen) void run("video", chosen);
               }}
             />
+            <div className="discovery-live-sources" aria-label="Live capture">
+              <div className="discovery-live-divider">
+                <span>Or capture live</span>
+              </div>
+              <div className="discovery-live-buttons">
+                <button
+                  type="button"
+                  className="discovery-live-button"
+                  disabled={busy || !config}
+                  onClick={() => void run("wired", null)}
+                >
+                  <span className="discovery-file-icon">
+                    <Cable size={22} />
+                  </span>
+                  <strong>iPhone USB</strong>
+                  <span>Continuity Camera on this Mac — live video here</span>
+                </button>
+                <button
+                  type="button"
+                  className="discovery-live-button"
+                  disabled={busy || !config}
+                  onClick={() => void run("phone", null)}
+                >
+                  <span className="discovery-file-icon">
+                    <QrCode size={22} />
+                  </span>
+                  <strong>Phone Wi‑Fi</strong>
+                  <span>Scan a QR code and stream from your iPhone camera</span>
+                </button>
+                <button
+                  type="button"
+                  className="discovery-live-button"
+                  disabled={busy || !config}
+                  onClick={() => void run("screen", null)}
+                >
+                  <span className="discovery-file-icon">
+                    <Monitor size={22} />
+                  </span>
+                  <strong>Witness this screen</strong>
+                  <span>Share a screen or window and analyze what happens on it</span>
+                </button>
+              </div>
+            </div>
             <div className="discovery-mode">
               <span>
                 <strong>Analysis pace</strong>

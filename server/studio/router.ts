@@ -28,7 +28,7 @@ function originAllowed(req: Request, publicOrigin: string | null) {
     return (
       origin.host === req.get("host") ||
       (publicOrigin !== null && origin.origin === new URL(publicOrigin).origin) ||
-      /^http:\/\/(localhost|127\.0\.0\.1):5173$/.test(origin.origin)
+      /^https?:\/\/(localhost|127\.0\.0\.1):5173$/.test(origin.origin)
     );
   } catch {
     return false;

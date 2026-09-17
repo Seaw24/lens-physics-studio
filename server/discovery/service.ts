@@ -1736,6 +1736,26 @@ export class DiscoveryService {
     return file;
   }
 
+  /** Latest ingest JPEG for the laptop live stage while a phone/camera is streaming. */
+  async livePreviewPath(sessionId: string) {
+    const session = this.store.get(sessionId);
+    for (let index = session.frames.length - 1; index >= 0; index--) {
+      const frame = session.frames[index];
+      const file = path.join(
+        this.store.sessionDir(sessionId),
+        "frames",
+        `${frame.frameId}.jpg`,
+      );
+      try {
+        await fs.access(file);
+        return file;
+      } catch {
+        // Frame may already have been pruned; try an older one.
+      }
+    }
+    return null;
+  }
+
   async saveFeedback(
     sessionId: string,
     candidateId: string,
@@ -2410,24 +2430,28 @@ export class DiscoveryService {
       }
       if (selected.length === 12) break;
     }
-    if (selected.length >= 2) {
-      const modelFrames = selected.map((frame) => ({
-        ...frame,
-        path: path.join(
-          this.store.sessionDir(sessionId),
-          "frames",
-          `${frame.frameId}.jpg`,
-        ),
-      }));
-      await this.processSnapshot(
-        sessionId,
-        generation,
-        modelFrames,
-        chosen.reasons,
-        { startMs: chosen.startMs, endMs: chosen.endMs },
-        signal,
-      );
+    if (selected.length < 2) {
+      // Keep the window eligible until enough frames land, unless we are draining.
+      if (this.phoneDrainRequested.has(sessionId))
+        this.phoneLastProcessedEnd.set(sessionId, chosen.endMs);
+      return;
     }
+    const modelFrames = selected.map((frame) => ({
+      ...frame,
+      path: path.join(
+        this.store.sessionDir(sessionId),
+        "frames",
+        `${frame.frameId}.jpg`,
+      ),
+    }));
+    await this.processSnapshot(
+      sessionId,
+      generation,
+      modelFrames,
+      chosen.reasons,
+      { startMs: chosen.startMs, endMs: chosen.endMs },
+      signal,
+    );
     this.phoneLastProcessedEnd.set(sessionId, chosen.endMs);
     await this.evictOldPhoneFrames(sessionId);
   }

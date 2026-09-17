@@ -120,7 +120,11 @@ function originAllowed(req: Request, service: DiscoveryService) {
     return (
       origin.host === req.get("host") ||
       (allowed && origin.origin === allowed.origin) ||
-      /^http:\/\/(localhost|127\.0\.0\.1):5173$/.test(origin.origin)
+      /^https?:\/\/(localhost|127\.0\.0\.1):5173$/.test(origin.origin) ||
+      // Same LAN host as the trusted public origin, either Vite or API port.
+      (allowed !== null &&
+        origin.hostname === allowed.hostname &&
+        (origin.port === "5173" || origin.port === "8787" || !origin.port))
     );
   } catch {
     return false;
@@ -374,6 +378,8 @@ export function createDiscoveryRouter(
         paired: true,
         sessionId: grant.sessionId,
         generation: grant.generation,
+        // Returned so iOS can auth frame uploads if the cookie is dropped.
+        phoneToken: grant.phoneToken,
       });
     }),
   );
@@ -449,6 +455,20 @@ export function createDiscoveryRouter(
           403,
         );
       res.json(await service.ingestPhoneBatch(parsed.metadata, parsed.parts));
+    }),
+  );
+  router.get(
+    "/sessions/:id/preview",
+    limiter(600, 60_000),
+    asyncRoute(async (req, res) => {
+      const file = await service.livePreviewPath(routeId(req));
+      if (!file) {
+        res.status(204).end();
+        return;
+      }
+      res.setHeader("Content-Type", "image/jpeg");
+      res.setHeader("Cache-Control", "no-store");
+      fs.createReadStream(file).pipe(res);
     }),
   );
   router.get("/config", (_req, res) => res.json(service.getConfig()));

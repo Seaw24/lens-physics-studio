@@ -77,7 +77,14 @@ export class DiscoveryAuth {
     const token = randomBytes(32).toString("base64url");
     const grant = { sessionId, generation, expiresAt: Date.now() + 120_000 };
     this.pairing.set(hash(token), grant);
-    const origin = this.config.publicOrigin || "https://localhost";
+    const origin = this.config.publicOrigin;
+    if (!origin) {
+      throw new DiscoveryError(
+        "PUBLIC_ORIGIN_REQUIRED",
+        "Phone pairing needs DISCOVERY_PUBLIC_ORIGIN set to your laptop’s HTTPS LAN address (not localhost).",
+        400,
+      );
+    }
     return {
       token,
       expiresAt: new Date(grant.expiresAt).toISOString(),
@@ -100,18 +107,20 @@ export class DiscoveryAuth {
       ...grant,
       expiresAt: Date.now() + this.config.limits.phoneSessionMs + 120_000,
     });
+    // Lax so iOS Safari keeps the cookie after a QR open + fetch redeem.
     res.cookie(phoneCookie, phoneToken, {
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "lax",
       secure: true,
       path: "/api/discovery",
       maxAge: this.config.limits.phoneSessionMs + 120_000,
     });
-    return grant;
+    return { ...grant, phoneToken };
   }
 
   requirePhone(req: Request, sessionId: string, generation?: number) {
-    const token = cookies(req)[phoneCookie];
+    const headerToken = String(req.get("x-discovery-phone-token") || "").trim();
+    const token = cookies(req)[phoneCookie] || headerToken || "";
     const grant = token ? this.phones.get(hash(token)) : undefined;
     if (
       !grant ||

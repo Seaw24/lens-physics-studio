@@ -20,10 +20,12 @@ import {
   type CandidateDetail,
   type DiscoveryClientConfig,
 } from "./api";
+import ScreenWitness from "./ScreenWitness";
 import WiredCamera from "./WiredCamera";
+import LiveFramePreview from "./LiveFramePreview";
 
 export type LaunchSource = {
-  kind: "image" | "video" | "phone" | "wired";
+  kind: "image" | "video" | "phone" | "wired" | "screen";
   file: File | null;
   startedAt: number;
   /** 0..1 while the file uploads; null once it is on the server. */
@@ -121,7 +123,10 @@ export default function LiveAnalysis({
   const judge = "Reviewer agent";
   const done = isTerminal(session?.state);
   const now = useNow(!done);
-  const live = launch.kind === "phone" || launch.kind === "wired";
+  const live =
+    launch.kind === "phone" ||
+    launch.kind === "wired" ||
+    launch.kind === "screen";
   const uploading = launch.uploadProgress !== null;
 
   // Created in the effect, not useMemo: StrictMode's extra cleanup would revoke a memoized URL.
@@ -220,17 +225,22 @@ export default function LiveAnalysis({
     if (focus && focusStatus === "judging")
       return `${judge} is checking a nominated moment at ${span(focus)}`;
     if (focus) return `${scout} is scanning ${span(focus)}`;
-    if (live)
+    if (live) {
+      if (launch.kind === "screen")
+        return observed > 0
+          ? "Watching the shared screen for physics…"
+          : "Waiting for screen share…";
       return session.connection === "connected" || observed > 0
         ? "Watching the camera for physics…"
         : "Waiting for the camera to connect…";
+    }
     return "Decoding the video and sampling frames…";
   })();
 
   const steps = live
     ? [
         {
-          label: "Camera",
+          label: launch.kind === "screen" ? "Screen" : "Camera",
           detail:
             observed > 0 ? `${clock(observed)} captured` : "Waiting for frames",
           state: observed > 0 ? "done" : "active",
@@ -395,9 +405,36 @@ export default function LiveAnalysis({
                 session={session}
                 onSession={onSession}
               />
-            ) : launch.kind === "phone" ? (
-              <div className="live-pairing">
-                {pairing ? (
+            ) : launch.kind === "screen" && session ? (
+              <ScreenWitness
+                key={session.id}
+                session={session}
+                onSession={onSession}
+              />
+            ) : launch.kind === "phone" && session ? (
+              <div className="live-pairing phone-live-stage">
+                {["ingesting", "paused"].includes(session.state) ? (
+                  <>
+                    <LiveFramePreview
+                      session={session}
+                      label="Live phone camera"
+                    />
+                    <p className="live-stream-caption">
+                      {(session.observedSourceMs ?? 0) > 0
+                        ? `Live from phone · ${Math.round((session.observedSourceMs ?? 0) / 1000)}s captured`
+                        : "Waiting for phone frames — open the QR link and allow the camera"}
+                    </p>
+                    {(session.observedSourceMs ?? 0) <= 0 && pairing && (
+                      <div className="phone-qr-compact">
+                        <img
+                          src={pairing.qrDataUrl}
+                          alt="One-time phone pairing QR code"
+                        />
+                        <a href={pairing.url}>{pairing.url}</a>
+                      </div>
+                    )}
+                  </>
+                ) : pairing ? (
                   <>
                     <img
                       src={pairing.qrDataUrl}
@@ -406,9 +443,8 @@ export default function LiveAnalysis({
                     <div>
                       <strong>Scan with your phone</strong>
                       <p>
-                        Open within two minutes and keep the page in the
-                        foreground. The one-time token is removed after it
-                        connects.
+                        Same Wi‑Fi, trusted HTTPS. Camera starts automatically
+                        after scan.
                       </p>
                       <a href={pairing.url}>{pairing.url}</a>
                     </div>

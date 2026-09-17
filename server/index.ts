@@ -73,7 +73,11 @@ app.use("/api", (req, res, next) => {
     try {
       denied =
         new URL(origin).host !== req.get("host") &&
-        !/^http:\/\/(localhost|127\.0\.0\.1):5173$/.test(origin);
+        !/^https?:\/\/(localhost|127\.0\.0\.1):5173$/.test(origin) &&
+        !(
+          discoveryConfig.publicOrigin &&
+          origin === new URL(discoveryConfig.publicOrigin).origin
+        );
     } catch {
       denied = true;
     }

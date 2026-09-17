@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Cable, Camera, CircleStop } from "lucide-react";
+import { CircleStop, Monitor } from "lucide-react";
 import { LIVE_SESSION_MAX_MS, type SessionSnapshot } from "../../shared/discovery";
 import { discoveryApi } from "./api";
 import { captureJpeg, sha256Hex } from "./capture";
@@ -14,39 +14,18 @@ type Frame = {
   blob: Blob;
 };
 
-/** Prefer Continuity / iPhone camera devices over the Mac's built-in FaceTime camera. */
-function scoreCamera(label: string) {
-  const text = label.toLowerCase();
-  if (/facetime|built-?in|macbook|studio display/.test(text)) return -100;
-  if (/iphone/.test(text) && /continuity|camera|usb/.test(text)) return 200;
-  if (/iphone|continuity camera/.test(text)) return 180;
-  if (/continuity/.test(text)) return 160;
-  if (/ipad|desk view/.test(text)) return 120;
-  if (/usb|external|logitech|webcam|phone/.test(text)) return 60;
-  if (!label.trim()) return 20;
-  return 0;
-}
-
-function pickIphone(cameras: MediaDeviceInfo[]) {
-  const ranked = [...cameras]
-    .map((camera) => ({ camera, score: scoreCamera(camera.label) }))
-    .sort((a, b) => b.score - a.score);
-  return ranked.find((item) => item.score > 0)?.camera ?? null;
-}
-
-export default function WiredCamera({
+/** Capture this Mac's screen (or a window/tab) and upload frames for live analysis. */
+export default function ScreenWitness({
   session,
   onSession,
 }: {
   session: SessionSnapshot;
   onSession: (session: SessionSnapshot) => void;
 }) {
-  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
-  const [deviceId, setDeviceId] = useState("");
   const [busy, setBusy] = useState(false);
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState(
-    "Looking for your plugged-in iPhone Continuity Camera…",
+    "Choose a screen, window, or browser tab to witness. Analysis starts once sharing begins.",
   );
   const [error, setError] = useState("");
   const [drops, setDrops] = useState(0);
@@ -68,9 +47,6 @@ export default function WiredCamera({
   const sourceOrigin = useRef<number | null>(null);
   const lastSample = useRef(-Infinity);
   const unreportedDrops = useRef(0);
-  const timingMethod = useRef("requestVideoFrameCallback");
-  const visible = useRef(document.visibilityState === "visible");
-  const autoStarted = useRef(false);
 
   function stopFrames() {
     window.clearInterval(timer.current);
@@ -94,20 +70,9 @@ export default function WiredCamera({
     abort.current?.abort();
     queue.current?.close();
     batch.current = [];
-    autoStarted.current = false;
   }
 
-  useEffect(() => {
-    const visibility = () => {
-      visible.current = document.visibilityState === "visible";
-      if (!visible.current) batch.current = [];
-    };
-    document.addEventListener("visibilitychange", visibility);
-    return () => {
-      dispose();
-      document.removeEventListener("visibilitychange", visibility);
-    };
-  }, []);
+  useEffect(() => () => dispose(), []);
 
   useEffect(() => {
     if (!["created", "ingesting", "paused"].includes(session.state)) {
@@ -116,75 +81,8 @@ export default function WiredCamera({
     }
   }, [session.state, session.generation]);
 
-  async function findCameras(options: { autoStart?: boolean } = {}) {
-    setBusy(true);
-    setError("");
-    const generation = lifetime.current;
-    try {
-      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia)
-        throw new Error(
-          "Open this page on localhost or trusted HTTPS to access the camera.",
-        );
-      // Permission unlocks device labels; stop the temporary stream immediately.
-      const permission = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false,
-      });
-      permission.getTracks().forEach((track) => track.stop());
-      if (generation !== lifetime.current) return;
-      const found = (
-        await navigator.mediaDevices.enumerateDevices()
-      ).filter((device) => device.kind === "videoinput");
-      setCameras(found);
-      const preferred = pickIphone(found);
-      const nextId = preferred?.deviceId || "";
-      setDeviceId(nextId);
-      if (preferred) {
-        setStatus(
-          `Found ${preferred.label || "your iPhone camera"}. Keep the USB cable connected and the iPhone locked.`,
-        );
-        if (
-          options.autoStart &&
-          !autoStarted.current &&
-          !stream.current &&
-          currentSession.current.state === "ingesting"
-        ) {
-          autoStarted.current = true;
-          setBusy(false);
-          await startCamera(nextId);
-          return;
-        }
-      } else {
-        setStatus(
-          found.length
-            ? "No Continuity Camera label matched yet. Select your iPhone in the list, or lock the phone, trust this Mac, and find cameras again."
-            : "No cameras found. Plug in the iPhone with a data cable, unlock once to Trust, then lock it and try again.",
-        );
-      }
-    } catch (caught) {
-      if (generation === lifetime.current)
-        setError(
-          String(caught instanceof Error ? caught.message : caught),
-        );
-    } finally {
-      if (generation === lifetime.current) setBusy(false);
-    }
-  }
-
-  useEffect(() => {
-    if (session.state !== "ingesting" || running) return;
-    void findCameras({ autoStart: true });
-    const onChange = () => {
-      if (!stream.current) void findCameras({ autoStart: true });
-    };
-    navigator.mediaDevices?.addEventListener?.("devicechange", onChange);
-    return () => {
-      navigator.mediaDevices?.removeEventListener?.("devicechange", onChange);
-    };
-  }, [session.state, session.id]);
-
   function flush() {
-    if (!visible.current || currentSession.current.state !== "ingesting") {
+    if (currentSession.current.state !== "ingesting") {
       batch.current = [];
       return;
     }
@@ -211,7 +109,6 @@ export default function WiredCamera({
   function tick() {
     const now = performance.now();
     if (
-      !visible.current ||
       currentSession.current.state !== "ingesting" ||
       encode.current ||
       now - lastSample.current < 125 ||
@@ -231,17 +128,16 @@ export default function WiredCamera({
       const blob = await captureJpeg(video.current!, canvas.current!);
       if (blob.size > 250 * 1024)
         throw new Error(
-          "A captured frame is too large. Select a lower-resolution camera.",
+          "A captured frame is too large. Share a smaller window or lower display resolution.",
         );
       const sha256 = await sha256Hex(blob);
       if (
         generation !== lifetime.current ||
-        !visible.current ||
         currentSession.current.state !== "ingesting"
       )
         return;
       batch.current.push({
-        frameId: `usb_${seq}_${crypto.randomUUID().slice(0, 8)}`,
+        frameId: `screen_${seq}_${crypto.randomUUID().slice(0, 8)}`,
         seq,
         sourceTimeMs,
         sha256,
@@ -252,7 +148,7 @@ export default function WiredCamera({
     })()
       .catch((caught) => {
         if (generation === lifetime.current) {
-          setError(String(caught));
+          setError(String(caught instanceof Error ? caught.message : caught));
           dispose();
           setRunning(false);
         }
@@ -262,32 +158,25 @@ export default function WiredCamera({
       });
   }
 
-  async function startCamera(overrideDeviceId?: string) {
-    const chosen = overrideDeviceId || deviceId;
-    if (
-      !chosen ||
-      stream.current ||
-      (!overrideDeviceId && busy) ||
-      currentSession.current.state !== "ingesting"
-    )
-      return;
+  async function startShare() {
+    if (stream.current || busy || session.state !== "ingesting") return;
     setBusy(true);
     setError("");
     const generation = lifetime.current;
     try {
-      const media = await navigator.mediaDevices.getUserMedia({
-        video: {
-          deviceId: { exact: chosen },
-          width: { ideal: 1280 },
-          frameRate: { ideal: 30 },
-        },
+      if (!window.isSecureContext || !navigator.mediaDevices?.getDisplayMedia)
+        throw new Error(
+          "Open this page on localhost or trusted HTTPS to share your screen.",
+        );
+      const media = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: { ideal: 30 } },
         audio: false,
       });
       if (
         generation !== lifetime.current ||
         currentSession.current.state !== "ingesting"
       ) {
-        media.getTracks().forEach((track) => track.stop());
+        media.getTracks().forEach((t) => t.stop());
         return;
       }
       stream.current = media;
@@ -300,11 +189,9 @@ export default function WiredCamera({
       }
       abort.current = new AbortController();
       const signal = abort.current.signal;
-      timingMethod.current = "performanceNow";
       queue.current = new CaptureQueue(
         async (frames) => {
-          const latest = currentSession.current;
-          if (latest.state !== "ingesting" || !visible.current) {
+          if (currentSession.current.state !== "ingesting") {
             unreportedDrops.current++;
             setDrops((n) => n + 1);
             return;
@@ -314,10 +201,10 @@ export default function WiredCamera({
           form.append(
             "metadata",
             JSON.stringify({
-              sessionId: latest.id,
-              generation: latest.generation,
-              batchId: `usb_batch_${crypto.randomUUID().replaceAll("-", "_")}`,
-              timingMethod: timingMethod.current,
+              sessionId: session.id,
+              generation: session.generation,
+              batchId: `screen_batch_${crypto.randomUUID().replaceAll("-", "_")}`,
+              timingMethod: "performanceNow",
               droppedBatches: count,
               frames: frames.map(({ blob: _blob, ...frame }) => frame),
             }),
@@ -326,7 +213,7 @@ export default function WiredCamera({
             form.append(frame.partName, frame.blob, `${frame.partName}.jpg`),
           );
           const response = await fetch(
-            `/api/discovery/sessions/${latest.id}/desktop-frames`,
+            `/api/discovery/sessions/${session.id}/desktop-frames`,
             {
               method: "POST",
               credentials: "same-origin",
@@ -341,7 +228,7 @@ export default function WiredCamera({
               ["paused"].includes(currentSession.current.state)
             )
               return;
-            throw new Error(result.error?.message || "Camera upload failed.");
+            throw new Error(result.error?.message || "Screen upload failed.");
           }
           unreportedDrops.current = Math.max(
             0,
@@ -349,7 +236,7 @@ export default function WiredCamera({
           );
           if (generation === lifetime.current)
             setStatus(
-              `Camera connected · frame ${result.ackSequence} received · ${result.captureGaps} gaps`,
+              `Witnessing screen · frame ${result.ackSequence} received · ${result.captureGaps} gaps`,
             );
         },
         () => {
@@ -359,7 +246,7 @@ export default function WiredCamera({
         (caught) => {
           if (generation !== lifetime.current) return;
           setError(
-            caught instanceof Error ? caught.message : "Camera upload failed.",
+            caught instanceof Error ? caught.message : "Screen upload failed.",
           );
           dispose();
           setRunning(false);
@@ -367,17 +254,12 @@ export default function WiredCamera({
       );
       media.getVideoTracks().forEach((track) => {
         track.onended = () => {
-          setError(
-            "Camera disconnected. Reconnect the cable, then start the camera again.",
-          );
-          dispose();
-          setRunning(false);
+          setStatus("Screen sharing stopped.");
+          void finish();
         };
       });
       setRunning(true);
-      setStatus(
-        "Capturing on this Mac. Keep this window visible and the USB cable connected.",
-      );
+      setStatus("Capturing your shared screen. Keep this analysis running.");
       schedule();
       timer.current = window.setInterval(flush, 500);
       sessionTimer.current = window.setTimeout(
@@ -389,7 +271,7 @@ export default function WiredCamera({
         dispose();
         setRunning(false);
         setError(
-          caught instanceof Error ? caught.message : "Camera unavailable.",
+          caught instanceof Error ? caught.message : "Screen share unavailable.",
         );
       }
     } finally {
@@ -422,52 +304,22 @@ export default function WiredCamera({
   }
 
   return (
-    <div className="wired-camera">
+    <div className="wired-camera screen-witness">
       <div>
-        <Cable size={20} />
-        <strong>iPhone over USB</strong>
+        <Monitor size={20} />
+        <strong>Witness this screen</strong>
       </div>
       <p>
-        Uses Apple Continuity Camera. Plug in a USB data cable, unlock once to
-        Trust This Computer if asked, then lock the iPhone. Continuity works
-        best while the phone stays locked.
+        Share a screen, window, or tab that shows the motion. Frames are sampled
+        here and reviewed the same way as a phone camera feed.
       </p>
       <div className="discovery-controls">
         <button
-          className="button secondary"
-          disabled={busy || running}
-          onClick={() => void findCameras({ autoStart: false })}
-        >
-          Find cameras
-        </button>
-        <label>
-          Camera{" "}
-          <select
-            aria-label="USB camera"
-            value={deviceId}
-            disabled={running || busy}
-            onChange={(event) => setDeviceId(event.target.value)}
-          >
-            <option value="">Select your iPhone camera</option>
-            {cameras.map((camera, index) => (
-              <option key={camera.deviceId} value={camera.deviceId}>
-                {camera.label || `Camera ${index + 1}`}
-                {scoreCamera(camera.label) >= 160 ? " · recommended" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
           className="button primary"
-          disabled={
-            busy ||
-            running ||
-            !deviceId ||
-            session.state !== "ingesting"
-          }
-          onClick={() => void startCamera()}
+          disabled={busy || running || session.state !== "ingesting"}
+          onClick={startShare}
         >
-          <Camera size={16} /> Start camera
+          <Monitor size={16} /> Share screen
         </button>
         {running && (
           <button
@@ -485,7 +337,7 @@ export default function WiredCamera({
         playsInline
         autoPlay
         className="wired-preview"
-        aria-label="Selected camera preview"
+        aria-label="Shared screen preview"
       />
       <canvas ref={canvas} hidden />
       <p role="status">

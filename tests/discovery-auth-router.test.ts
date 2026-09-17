@@ -15,7 +15,10 @@ test("controller and phone scopes, one-time pairing, idempotency, and frame inte
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "lens-router-test-"));
   const accessCode = "controller-access-code-32-bytes-minimum";
   const config = loadDiscoveryConfig(
-    { DISCOVERY_ACCESS_CODE: accessCode },
+    {
+      DISCOVERY_ACCESS_CODE: accessCode,
+      DISCOVERY_PUBLIC_ORIGIN: "https://192.168.1.20:8787",
+    },
     path.join(root, "runtime"),
   );
   config.limits.minCloudStartSpacingMs = 0;
