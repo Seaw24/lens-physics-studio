@@ -1,0 +1,41 @@
+{
+  "epic_original_video_head_checks": [
+    {
+      "url": "https://data.bris.ac.uk/datasets/3h91syskeag572hl6tvuovwv4d/videos/train/P26/P26_12.MP4",
+      "status": 200,
+      "bytes": 71095286
+    },
+    {
+      "url": "https://data.bris.ac.uk/datasets/3h91syskeag572hl6tvuovwv4d/videos/train/P08/P08_07.MP4",
+      "status": 200,
+      "bytes": 90578188
+    },
+    {
+      "url": "https://data.bris.ac.uk/datasets/3h91syskeag572hl6tvuovwv4d/videos/train/P06/P06_08.MP4",
+      "status": 200,
+      "bytes": 115761934
+    },
+    {
+      "url": "https://data.bris.ac.uk/datasets/2g1n6qdydwa9u22shpxqzp0t8m/P03/videos/P03_115.MP4",
+      "status": 200,
+      "bytes": 67384010
+    },
+    {
+      "url": "https://data.bris.ac.uk/datasets/3h91syskeag572hl6tvuovwv4d/videos/train/P08/P08_28.MP4",
+      "status": 200,
+      "bytes": 129290265
+    },
+    {
+      "url": "https://data.bris.ac.uk/datasets/3h91syskeag572hl6tvuovwv4d/videos/test/P11/P11_06.MP4",
+      "status": 200,
+      "bytes": 145340814,
+      "note": "Corrected to original EPIC-55 test storage path using official epic_55_splits.csv; earlier guessed train path was 404."
+    }
+  ],
+  "kinetics_archive_head_check": {
+    "url": "https://s3.amazonaws.com/kinetics/400/train/part_0.tar.gz",
+    "status": 200,
+    "bytes": "1631315939",
+    "note": "HEAD only; contents not downloaded or decoded"
+  }
+}

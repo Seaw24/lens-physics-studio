@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "1.1",
+  "exampleOnly": true,
+  "eventId": "example_event_image",
+  "sessionId": "example_session",
+  "candidateId": "example_candidate_image",
+  "inputMode": "uploaded_image",
+  "processingMode": "image",
+  "createdAt": "2026-09-16T18:00:00.000Z",
+  "media": {
+    "kind": "image",
+    "assetId": "example_asset_image",
+    "url": "/api/discovery/assets/example_asset_image",
+    "mimeType": "image/jpeg",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "width": 720,
+    "height": 1280,
+    "byteLength": 1,
+    "sourceTimebase": "not_applicable",
+    "sourceStartSeconds": null,
+    "sourceEndSeconds": null,
+    "clipDurationSeconds": null,
+    "eventStartInClipSeconds": null,
+    "eventEndInClipSeconds": null,
+    "fidelity": "normalized_image",
+    "nominalFps": null,
+    "timingUncertaintyMs": null,
+    "gaps": [],
+    "hasAudio": false
+  },
+  "course": {
+    "moduleId": "intro-mechanics-forces-torque",
+    "version": "1",
+    "objectives": [
+      {
+        "id": "force-direction",
+        "concept": "force",
+        "text": "Distinguish velocity direction from acceleration and net-force direction when evidence supports that comparison."
+      },
+      {
+        "id": "torque-moment-arm",
+        "concept": "torque",
+        "text": "Explain how force direction and perpendicular moment arm affect torque about a pivot."
+      },
+      {
+        "id": "projectile-free-flight",
+        "concept": "projectile",
+        "text": "Distinguish velocity and gravitational acceleration in an explicitly stated ideal projectile model."
+      },
+      {
+        "id": "force-interaction",
+        "concept": "force",
+        "text": "Use a visible push or pull as context without inventing force magnitude."
+      }
+    ]
+  },
+  "detections": [
+    {
+      "detectionId": "example_detection_explorer",
+      "detector": "explorer",
+      "modelId": "example-explorer",
+      "modelVersion": "example-only-v1",
+      "modelMode": "bedrock",
+      "promptVersion": "explorer-v1",
+      "label": "door_context",
+      "family": "static_context",
+      "opportunityKind": "scene_context",
+      "sourceRange": null,
+      "rawScore": null,
+      "scoreMeaning": "self_reported_support",
+      "support": "moderate",
+      "observation": "Synthetic fixture: a stationary door, handle, and hinge are visible.",
+      "evidenceFrameIds": [
+        "image_f0"
+      ],
+      "inferenceMs": 0
+    }
+  ],
+  "fusion": {
+    "support": "explorer_only",
+    "reason": "Single-image scene context; action detector is not applicable.",
+    "disagreement": false
+  },
+  "review": {
+    "verdict": "teachable",
+    "opportunityKind": "scene_context",
+    "modelId": "example-reviewer",
+    "promptVersion": "teachability-v1",
+    "objectiveIds": [
+      "torque-moment-arm"
+    ],
+    "concepts": [
+      "torque"
+    ],
+    "observation": "Synthetic example: a static door has a handle visibly offset from its hinge side.",
+    "evidence": [
+      {
+        "frameId": "image_f0",
+        "timeInClipSeconds": null,
+        "statement": "Synthetic example: pivot and handle positions are visible."
+      }
+    ],
+    "reason": "The visible pivot and contact can support a conceptual moment-arm comparison.",
+    "limitations": [
+      "Synthetic fixture with no real image or inference.",
+      "No opening action or applied force was observed."
+    ],
+    "reviewedAt": "2026-09-16T18:00:00.000Z",
+    "usage": {
+      "inputTokens": null,
+      "outputTokens": null,
+      "latencyMs": 0,
+      "estimatedUsd": null,
+      "pricingVersion": null
+    }
+  }
+}

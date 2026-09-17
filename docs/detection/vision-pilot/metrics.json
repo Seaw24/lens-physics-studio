@@ -1,0 +1,72 @@
+{
+  "date": "2026-09-16",
+  "modelId": "us.anthropic.claude-sonnet-4-6",
+  "region": "us-east-1",
+  "promptHash": "da8611cd87719bc1c536204d2b47a41477686bae008cc9e3061f0d3c998e2349",
+  "sourceDurationSeconds": 107.16,
+  "sampledFrames": 215,
+  "samplingFps": 2,
+  "windowSeconds": 6,
+  "strideSeconds": 3,
+  "maximumFramesPerRequest": 12,
+  "scanAttempts": 36,
+  "preflightAttempts": 1,
+  "scanInputTokens": 331511,
+  "scanOutputTokens": 21356,
+  "preflightInputTokens": 12,
+  "preflightOutputTokens": 5,
+  "latencyMs": {
+    "p50": 13863,
+    "p95": 20740,
+    "mean": 13201.1,
+    "totalInferenceMs": 475239
+  },
+  "validResponses": 35,
+  "invalidResponses": 1,
+  "rawOpportunitiesBeforeDeduplication": 65,
+  "development": {
+    "parserVersion": "v1.1-single-outer-fence",
+    "attempts": 9,
+    "valid": 9,
+    "invalid": 0,
+    "emptyWindows": 0,
+    "latencyMs": {
+      "p50": 19535,
+      "p95": 20740
+    },
+    "usage": {
+      "inputTokens": 81952,
+      "outputTokens": 8631
+    },
+    "usageComplete": true,
+    "opportunitiesBeforeDeduplication": 27,
+    "verdictCounts": {
+      "teachable": 27,
+      "not_teachable": 0,
+      "insufficient_evidence": 0
+    }
+  },
+  "holdout": {
+    "parserVersion": "v1.1-single-outer-fence",
+    "attempts": 27,
+    "valid": 26,
+    "invalid": 1,
+    "emptyWindows": 5,
+    "latencyMs": {
+      "p50": 12472,
+      "p95": 18989
+    },
+    "usage": {
+      "inputTokens": 249559,
+      "outputTokens": 12725
+    },
+    "usageComplete": true,
+    "opportunitiesBeforeDeduplication": 38,
+    "verdictCounts": {
+      "teachable": 37,
+      "not_teachable": 1,
+      "insufficient_evidence": 0
+    }
+  },
+  "scope": "Positive-reference coverage reviewed by assistant; no independent human precision measurement, no live test, no cheaper model or activity gate tested."
+}

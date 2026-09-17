@@ -118,3 +118,7 @@ body, .app-shell, .app-shell :is(button, input, select, textarea) { font-family:
 .app-shell :is(.sequence-line, .watch-sequence) { border-color: #d9dfe8 !important; }
 .app-shell :is(.sequence-line, .watch-sequence) :is(hr, i, svg) { color: #b9c3d3 !important; border-color: #d9dfe8 !important; }
 .app-shell .onscreen-coach-identity :is(.lens-avatar, .lens-mark) { background: var(--blue) !important; }
+
+/* Keep-alive page slots (App.tsx): layout-neutral while shown, removed while hidden. */
+.page-slot { display: contents; }
+.page-slot[hidden] { display: none; }

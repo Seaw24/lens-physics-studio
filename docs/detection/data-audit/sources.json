@@ -1,0 +1,68 @@
+[
+  {
+    "file": "EPIC_100_train.csv",
+    "url": "https://raw.githubusercontent.com/epic-kitchens/epic-kitchens-100-annotations/master/EPIC_100_train.csv",
+    "bytes": 8415872,
+    "sha256": "a3a7ef2e397bd8af12bd0496b09d61b1f2c1f3f6e1726fa86af50a27f4855e87"
+  },
+  {
+    "file": "EPIC_100_validation.csv",
+    "url": "https://raw.githubusercontent.com/epic-kitchens/epic-kitchens-100-annotations/master/EPIC_100_validation.csv",
+    "bytes": 1184998,
+    "sha256": "35f7932ba0a1127a96cac215a98d35398946f343e3cea9ad6688ed17eee9d75d"
+  },
+  {
+    "file": "EPIC_100_video_info.csv",
+    "url": "https://raw.githubusercontent.com/epic-kitchens/epic-kitchens-100-annotations/master/EPIC_100_video_info.csv",
+    "bytes": 27721,
+    "sha256": "75fd040f6662cb407b4ca2eed4811ca94df280a1aba00b6bf8a5cd286deff382"
+  },
+  {
+    "file": "EPIC_100_verb_classes.csv",
+    "url": "https://raw.githubusercontent.com/epic-kitchens/epic-kitchens-100-annotations/master/EPIC_100_verb_classes.csv",
+    "bytes": 13402,
+    "sha256": "aab8bf210d0234b6facb9b191ae402c03a5f8965d123586b4762d3468a85033e"
+  },
+  {
+    "file": "EPIC_100_noun_classes.csv",
+    "url": "https://raw.githubusercontent.com/epic-kitchens/epic-kitchens-100-annotations/master/EPIC_100_noun_classes.csv",
+    "bytes": 49357,
+    "sha256": "40f0a81c5bd06b33050df9f0bd17cd3c2fccd759f9581e4e5e04fec7562be893"
+  },
+  {
+    "file": "license.txt",
+    "url": "https://raw.githubusercontent.com/epic-kitchens/epic-kitchens-100-annotations/master/license.txt",
+    "bytes": 481,
+    "sha256": "acb7384c3f73cc96367ac132bc0bd57efa38c4495c17781032a2cf1444b65ebe"
+  },
+  {
+    "file": "epic_downloader.py",
+    "url": "https://raw.githubusercontent.com/epic-kitchens/epic-kitchens-download-scripts/master/epic_downloader.py",
+    "bytes": 23514,
+    "sha256": "3e23b4989a375ae8555f4db9f3c40d6a7ab1e011d377cb77fdfbe3f7d78d21f5"
+  },
+  {
+    "file": "kinetics_train.csv",
+    "url": "https://s3.amazonaws.com/kinetics/400/annotations/train.csv",
+    "bytes": 10529265,
+    "sha256": "a5f585f790f35c080aa13964f14de63171e909575feb843efc1c29bb5cfc6236"
+  },
+  {
+    "file": "kinetics_val.csv",
+    "url": "https://s3.amazonaws.com/kinetics/400/annotations/val.csv",
+    "bytes": 810935,
+    "sha256": "358eaf47e7f80ebf9b17d49eb0635ad5e0fdab98a9cbd75ffdd2ee5d5e5b6944"
+  },
+  {
+    "file": "kinetics_README.md",
+    "url": "https://raw.githubusercontent.com/cvdfoundation/kinetics-dataset/main/README.md",
+    "bytes": 5976,
+    "sha256": "73e5cc42c329c655cfc9e45c31f2985451f81043557ba14c0d630459f3b0ee4a"
+  },
+  {
+    "file": "epic_55_splits.csv",
+    "url": "https://raw.githubusercontent.com/epic-kitchens/epic-kitchens-download-scripts/master/data/epic_55_splits.csv",
+    "bytes": 7214,
+    "sha256": "5acf8b924a51819b7dda91cb56b867f6fc08d367dd0e3f6c99ecdb0f8a9c45e4"
+  }
+]

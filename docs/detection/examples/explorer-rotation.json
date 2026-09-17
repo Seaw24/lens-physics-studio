@@ -1,0 +1,17 @@
+{
+  "proposals": [
+    {
+      "label": "opening a cupboard door",
+      "family": "rotation",
+      "opportunityKind": "observed_action",
+      "startFrameId": "f_020",
+      "endFrameId": "f_036",
+      "support": "moderate",
+      "observation": "The door appears farther open in a later frame.",
+      "evidenceFrameIds": [
+        "f_020",
+        "f_036"
+      ]
+    }
+  ]
+}

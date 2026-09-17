@@ -1,0 +1,26 @@
+{
+  "verdict": "teachable",
+  "opportunityKind": "observed_action",
+  "objectiveIds": [
+    "torque-moment-arm"
+  ],
+  "concepts": [
+    "torque"
+  ],
+  "observation": "Synthetic example: a hand pulls a cupboard handle and the door rotates.",
+  "evidence": [
+    {
+      "frameId": "f_020",
+      "statement": "Synthetic example: handle and hinge side are visible."
+    },
+    {
+      "frameId": "f_036",
+      "statement": "Synthetic example: the door is farther open."
+    }
+  ],
+  "reason": "The visible pivot and contact can support a conceptual moment-arm comparison.",
+  "limitations": [
+    "Synthetic contract fixture. No associated real media, model run, or usage measurement exists.",
+    "Applied force and physical distances were not measured."
+  ]
+}

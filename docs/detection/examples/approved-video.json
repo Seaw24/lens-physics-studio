@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "1.1",
+  "exampleOnly": true,
+  "eventId": "example_event_video",
+  "sessionId": "example_session",
+  "candidateId": "example_candidate",
+  "inputMode": "live_phone",
+  "processingMode": "live",
+  "createdAt": "2026-09-16T18:00:00.000Z",
+  "media": {
+    "kind": "video",
+    "assetId": "example_asset_video",
+    "url": "/api/discovery/assets/example_asset_video",
+    "mimeType": "video/mp4",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "width": 720,
+    "height": 1280,
+    "byteLength": 1,
+    "sourceTimebase": "session_media_seconds",
+    "sourceStartSeconds": 5.0,
+    "sourceEndSeconds": 12.0,
+    "clipDurationSeconds": 7.0,
+    "eventStartInClipSeconds": 2.0,
+    "eventEndInClipSeconds": 4.8,
+    "fidelity": "sampled_camera_frames",
+    "nominalFps": 8,
+    "timingUncertaintyMs": 125,
+    "gaps": [],
+    "hasAudio": false
+  },
+  "course": {
+    "moduleId": "intro-mechanics-forces-torque",
+    "version": "1",
+    "objectives": [
+      {
+        "id": "force-direction",
+        "concept": "force",
+        "text": "Distinguish velocity direction from acceleration and net-force direction when evidence supports that comparison."
+      },
+      {
+        "id": "torque-moment-arm",
+        "concept": "torque",
+        "text": "Explain how force direction and perpendicular moment arm affect torque about a pivot."
+      },
+      {
+        "id": "projectile-free-flight",
+        "concept": "projectile",
+        "text": "Distinguish velocity and gravitational acceleration in an explicitly stated ideal projectile model."
+      },
+      {
+        "id": "force-interaction",
+        "concept": "force",
+        "text": "Use a visible push or pull as context without inventing force magnitude."
+      }
+    ]
+  },
+  "detections": [
+    {
+      "detectionId": "example_detection_action",
+      "detector": "action",
+      "modelId": "example-mc3-head",
+      "modelVersion": "example-only-v1",
+      "modelMode": "custom_head",
+      "promptVersion": null,
+      "label": "opening_hinged_door",
+      "family": "rotation",
+      "opportunityKind": "observed_action",
+      "sourceRange": {
+        "startMs": 7000,
+        "endMs": 9800
+      },
+      "rawScore": 0.84,
+      "scoreMeaning": "uncalibrated_softmax",
+      "support": "strong",
+      "observation": "Synthetic fixture: a cupboard door appears to open.",
+      "evidenceFrameIds": [
+        "f_020",
+        "f_036"
+      ],
+      "inferenceMs": 0
+    },
+    {
+      "detectionId": "example_detection_explorer",
+      "detector": "explorer",
+      "modelId": "example-explorer",
+      "modelVersion": "example-only-v1",
+      "modelMode": "bedrock",
+      "promptVersion": "explorer-v1",
+      "label": "opening_hinged_door",
+      "family": "rotation",
+      "opportunityKind": "observed_action",
+      "sourceRange": {
+        "startMs": 7000,
+        "endMs": 9800
+      },
+      "rawScore": null,
+      "scoreMeaning": "self_reported_support",
+      "support": "moderate",
+      "observation": "Synthetic fixture: a cupboard door appears to open.",
+      "evidenceFrameIds": [
+        "f_020",
+        "f_036"
+      ],
+      "inferenceMs": 0
+    }
+  ],
+  "fusion": {
+    "support": "both_detectors",
+    "reason": "Synthetic example: matching overlapping rotation proposals.",
+    "disagreement": false
+  },
+  "review": {
+    "verdict": "teachable",
+    "opportunityKind": "observed_action",
+    "modelId": "example-reviewer",
+    "promptVersion": "teachability-v1",
+    "objectiveIds": [
+      "torque-moment-arm"
+    ],
+    "concepts": [
+      "torque"
+    ],
+    "observation": "Synthetic example: a hand pulls a cupboard handle and the door rotates.",
+    "evidence": [
+      {
+        "frameId": "f_020",
+        "timeInClipSeconds": 2.2,
+        "statement": "Synthetic example: handle and hinge side are visible."
+      },
+      {
+        "frameId": "f_036",
+        "timeInClipSeconds": 4.2,
+        "statement": "Synthetic example: the door is farther open."
+      }
+    ],
+    "reason": "The visible pivot and contact can support a conceptual moment-arm comparison.",
+    "limitations": [
+      "Synthetic contract fixture. No associated real media, model run, or usage measurement exists.",
+      "Applied force and physical distances were not measured."
+    ],
+    "reviewedAt": "2026-09-16T18:00:00.000Z",
+    "usage": {
+      "inputTokens": null,
+      "outputTokens": null,
+      "latencyMs": 0,
+      "estimatedUsd": null,
+      "pricingVersion": null
+    }
+  }
+}

@@ -81,7 +81,7 @@ export default function VideoPlayer({
     const go = () => {
       v.currentTime = Math.min(seek.time, v.duration || seek.time);
       if (autoPlay)
-        v.play().catch(() => setError("Press play to start this recording."));
+        v.play().catch(() => undefined);
     };
     if (v.readyState >= 1) go();
     else v.addEventListener("loadedmetadata", go, { once: true });
@@ -389,9 +389,7 @@ export default function VideoPlayer({
             const v = video.current;
             if (v) {
               if (v.paused)
-                v.play().catch(() =>
-                  setError("Press play again once the recording is loaded."),
-                );
+                v.play().catch(() => undefined);
               else v.pause();
             }
           }}

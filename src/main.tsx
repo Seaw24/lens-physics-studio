@@ -11,8 +11,12 @@ import "./coaching.css";
 import "./theme-legacy.css";
 import "./theme.css";
 import "./landing.css";
+import PhoneCapture from "./discovery/PhoneCapture";
+
+const RootComponent =
+  window.location.pathname === "/capture" ? PhoneCapture : App;
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <RootComponent />
   </React.StrictMode>,
 );

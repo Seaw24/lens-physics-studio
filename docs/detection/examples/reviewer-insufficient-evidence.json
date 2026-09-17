@@ -1,0 +1,12 @@
+{
+  "verdict": "insufficient_evidence",
+  "opportunityKind": "scene_context",
+  "objectiveIds": [],
+  "concepts": [],
+  "observation": "Synthetic evaluation fixture.",
+  "evidence": [],
+  "reason": "Occlusion and camera movement prevent deciding what interaction occurred.",
+  "limitations": [
+    "Synthetic fixture; not a measured model decision."
+  ]
+}

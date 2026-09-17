@@ -1,0 +1,134 @@
+{
+  "epic_train_all_rows": 67217,
+  "epic_targets": {
+    "rows": 2009,
+    "videos": 402,
+    "participants": 32,
+    "duplicate_ids": 0,
+    "duplicate_intervals": 0,
+    "bad_intervals": 0,
+    "past_duration": [],
+    "durations": {
+      "min": 0.24,
+      "p10": 0.7,
+      "median": 1.15,
+      "p90": 2.17,
+      "max": 14.61,
+      "under_1": 697,
+      "under_2": 1743
+    },
+    "raw_nouns": {
+      "door": 206,
+      "cupboard": 1046,
+      "fridge": 630,
+      "door:fridge": 2,
+      "door:cupboard": 4,
+      "refrigerator": 34,
+      "cabinet": 72,
+      "door:refrigerator": 1,
+      "locker": 8,
+      "closet": 1,
+      "cage": 1,
+      "door:cabinet": 1,
+      "flap": 3
+    },
+    "missing_required_fields": 0,
+    "reversed_frame_intervals": 0
+  },
+  "epic_by_class": {
+    "cupboard": {
+      "rows": 1342,
+      "videos": 338,
+      "participants": 28,
+      "duplicate_ids": 0,
+      "duplicate_intervals": 0,
+      "bad_intervals": 0,
+      "past_duration": [],
+      "durations": {
+        "min": 0.24,
+        "p10": 0.66,
+        "median": 1.07,
+        "p90": 2.06,
+        "max": 14.61,
+        "under_1": 546,
+        "under_2": 1191
+      },
+      "raw_nouns": {
+        "door": 206,
+        "cupboard": 1046,
+        "door:cupboard": 4,
+        "cabinet": 72,
+        "locker": 8,
+        "closet": 1,
+        "cage": 1,
+        "door:cabinet": 1,
+        "flap": 3
+      }
+    },
+    "fridge": {
+      "rows": 667,
+      "videos": 277,
+      "participants": 32,
+      "duplicate_ids": 0,
+      "duplicate_intervals": 0,
+      "bad_intervals": 0,
+      "past_duration": [],
+      "durations": {
+        "min": 0.5,
+        "p10": 0.8,
+        "median": 1.33,
+        "p90": 2.33,
+        "max": 7.35,
+        "under_1": 151,
+        "under_2": 552
+      },
+      "raw_nouns": {
+        "fridge": 630,
+        "door:fridge": 2,
+        "refrigerator": 34,
+        "door:refrigerator": 1
+      }
+    }
+  },
+  "epic_train_validation_shared_videos": 0,
+  "epic_train_validation_shared_narration_ids": 0,
+  "kinetics_train_all_rows": 246534,
+  "kinetics_by_class": {
+    "shooting basketball": {
+      "rows": 445,
+      "unique_youtube_ids": 445,
+      "bad_intervals": 0,
+      "min_duration": 10,
+      "max_duration": 10,
+      "is_cc_counts": {
+        "0": 442,
+        "1": 3
+      },
+      "train_validation_shared_ids": []
+    },
+    "dribbling basketball": {
+      "rows": 773,
+      "unique_youtube_ids": 773,
+      "bad_intervals": 0,
+      "min_duration": 10,
+      "max_duration": 10,
+      "is_cc_counts": {
+        "0": 769,
+        "1": 4
+      },
+      "train_validation_shared_ids": []
+    },
+    "opening bottle": {
+      "rows": 582,
+      "unique_youtube_ids": 582,
+      "bad_intervals": 0,
+      "min_duration": 10,
+      "max_duration": 10,
+      "is_cc_counts": {
+        "0": 576,
+        "1": 6
+      },
+      "train_validation_shared_ids": []
+    }
+  }
+}

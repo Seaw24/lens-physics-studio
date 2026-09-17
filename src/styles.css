@@ -155,13 +155,18 @@ main {
 .brand {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 8px;
   padding: 0 10px;
-  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+.brand .momentum-mark {
+  width: 28px;
+  height: 28px;
 }
 .brand > span:last-child {
   font-family: var(--serif);
-  font-size: 42px;
+  font-size: 20px;
   font-weight: 550;
   letter-spacing: -2.5px;
   line-height: 1;
@@ -3540,8 +3545,12 @@ details summary {
   .brand {
     gap: 7px;
   }
+  .brand .momentum-mark {
+    width: 24px;
+    height: 24px;
+  }
   .brand > span:last-child {
-    font-size: 38px;
+    font-size: 17px;
   }
   .brand-caption {
     font-size: 9px;

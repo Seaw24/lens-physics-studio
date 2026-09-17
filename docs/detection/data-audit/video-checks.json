@@ -1,0 +1,53 @@
+{
+  "audit_date": "2026-09-16",
+  "decoder": "FFmpeg 7.1, imageio-ffmpeg 0.6.0 macOS arm64 wheel",
+  "publisher_checksums_compared": false,
+  "sample_selection": "Three short source recordings, selected for bounded download size; not random.",
+  "visual_inspection": "16 ordered sampled frames per target action at 4 fps; not full-motion playback or a dataset-wide review.",
+  "videos": [
+    {
+      "file": "P26_12.MP4",
+      "url": "https://data.bris.ac.uk/datasets/3h91syskeag572hl6tvuovwv4d/videos/train/P26/P26_12.MP4",
+      "bytes": 71095286,
+      "sha256": "23aa6b1adb9a1feaed7aea31a4adc9eb2342a5e06bc6aa142b44919702212632",
+      "elapsed_s": 76.0,
+      "file_size_matches_head": true,
+      "full_video_decode": {
+        "video": "P26_12",
+        "returncode": 0,
+        "stderr": "",
+        "check": "Full video-stream decode with FFmpeg -xerror; audio not audited"
+      }
+    },
+    {
+      "file": "P08_07.MP4",
+      "url": "https://data.bris.ac.uk/datasets/3h91syskeag572hl6tvuovwv4d/videos/train/P08/P08_07.MP4",
+      "bytes": 90578188,
+      "sha256": "c66846208b15cbae9e2fc6519399503cba896e9e05c49a1e95c359e2f6f4dffd",
+      "resumed_from": 58720256,
+      "elapsed_s": 33.7,
+      "initial_transfer_note": "Stopped at audit time cap; resumed successfully. Intermediate partial file was not a valid training asset.",
+      "file_size_matches_head": true,
+      "full_video_decode": {
+        "video": "P08_07",
+        "returncode": 0,
+        "stderr": "",
+        "check": "Full video-stream decode with FFmpeg -xerror; audio not audited"
+      }
+    },
+    {
+      "file": "P03_115.MP4",
+      "url": "https://data.bris.ac.uk/datasets/2g1n6qdydwa9u22shpxqzp0t8m/P03/videos/P03_115.MP4",
+      "bytes": 67384010,
+      "sha256": "812e357976e7841e3e99914b6d0b267975f6d96290ef8013c73b64e5cc7e2ef6",
+      "elapsed_s": 72.2,
+      "file_size_matches_head": true,
+      "full_video_decode": {
+        "video": "P03_115",
+        "returncode": 0,
+        "stderr": "",
+        "check": "Full video-stream decode with FFmpeg -xerror; audio not audited"
+      }
+    }
+  ]
+}
