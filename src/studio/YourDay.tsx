@@ -4,8 +4,6 @@ import {
   Check,
   FlaskConical,
   LoaderCircle,
-  LockKeyhole,
-  LogIn,
   Plus,
   RefreshCcw,
   ScanSearch,
@@ -19,7 +17,6 @@ import type {
   StudioRecord,
   StudioSpec,
 } from "../../shared/studio/schema";
-import { discoveryApi } from "../discovery/api";
 import { StudioApiError, studioApi } from "./api";
 import PhysicsLab from "./lab/PhysicsLab";
 import { RichText } from "./theater/Overlays";
@@ -62,11 +59,15 @@ function quizDone(eventId: string) {
   }
 }
 
-export default function YourDay({ onOpenDiscovery }: { onOpenDiscovery: () => void }) {
+export default function YourDay({
+  onOpenDiscovery,
+  includeSample = false,
+}: {
+  onOpenDiscovery: () => void;
+  includeSample?: boolean;
+}) {
   const [recordings, setRecordings] = useState<DayRecording[] | null>(null);
-  const [auth, setAuth] = useState<"unknown" | "ok" | "locked">("unknown");
   const [error, setError] = useState("");
-  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string | null>(readSelected);
   const [record, setRecord] = useState<StudioRecord | null>(null);
@@ -77,17 +78,17 @@ export default function YourDay({ onOpenDiscovery }: { onOpenDiscovery: () => vo
     try {
       const day = await studioApi.day(signal);
       setRecordings(day.recordings);
-      setAuth("ok");
       setError("");
     } catch (caught) {
       if (caught instanceof DOMException && caught.name === "AbortError") return;
-      if (caught instanceof StudioApiError && caught.status === 401) {
-        setAuth("locked");
-        setRecordings([]);
-      } else {
-        setRecordings((current) => current ?? []);
-        setError(caught instanceof Error ? caught.message : "Your day could not load.");
-      }
+      setRecordings((current) => current ?? []);
+      setError(
+        caught instanceof StudioApiError && caught.status === 401
+          ? "Sign in again to see today's analyzed moments."
+          : caught instanceof Error
+            ? caught.message
+            : "Your day could not load.",
+      );
     }
   }, []);
 
@@ -106,13 +107,16 @@ export default function YourDay({ onOpenDiscovery }: { onOpenDiscovery: () => vo
         detail: `${recording.sourceKind === "phone" ? "Live camera" : "Recording"}${recording.durationSeconds ? ` · ${Math.round(recording.durationSeconds)} s` : ""}`,
         slides: recording.slides,
       });
-    list.push({ key: "sample", title: "Sample", detail: "Basketball · prepared", slides: [SAMPLE_SLIDE] });
+    if (includeSample)
+      list.push({ key: "sample", title: "Sample", detail: "Basketball · prepared", slides: [SAMPLE_SLIDE] });
     return list;
-  }, [recordings]);
+  }, [includeSample, recordings]);
   const slides = useMemo(() => groups.flatMap((group) => group.slides), [groups]);
   const current = slides.find((slide) => slide.eventId === selected) ?? slides[0] ?? null;
   const index = current ? slides.indexOf(current) : -1;
   const userSlides = slides.filter((slide) => slide.eventId !== SAMPLE_SLIDE.eventId).length;
+  // With nothing to browse yet, the rail would only repeat the one call to action.
+  const showRail = slides.length > 0;
 
   const choose = (eventId: string) => {
     const next = slides.findIndex((slide) => slide.eventId === eventId);
@@ -127,7 +131,7 @@ export default function YourDay({ onOpenDiscovery }: { onOpenDiscovery: () => vo
 
   // Load the selected studio and poll while its agents work.
   useEffect(() => {
-    if (!current || current.eventId === SAMPLE_SLIDE.eventId || auth !== "ok") {
+    if (!current || current.eventId === SAMPLE_SLIDE.eventId) {
       setRecord(null);
       return;
     }
@@ -160,7 +164,7 @@ export default function YourDay({ onOpenDiscovery }: { onOpenDiscovery: () => vo
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [current?.eventId, auth]);
+  }, [current?.eventId]);
 
   // Keep rail statuses fresh while anything is being built.
   useEffect(() => {
@@ -193,21 +197,6 @@ export default function YourDay({ onOpenDiscovery }: { onOpenDiscovery: () => vo
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  async function unlock(event: React.FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      await discoveryApi.login(code);
-      setCode("");
-      await loadDay();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "That code did not work.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function regenerate(force: boolean) {
     if (!current) return;
     setBusy(true);
@@ -228,78 +217,67 @@ export default function YourDay({ onOpenDiscovery }: { onOpenDiscovery: () => vo
     current?.eventId === SAMPLE_SLIDE.eventId ? SAMPLE_STUDIO : record?.stage === "ready" ? record.spec : null;
 
   return (
-    <div className="studio-day page-enter">
-      <nav className="studio-rail" aria-label="Your events" ref={rail}>
-        <div className="studio-rail-head">
-          <span className="eyebrow">Your day</span>
-          <strong>
-            {recordings === null ? "Loading…" : `${userSlides} ${userSlides === 1 ? "moment" : "moments"}`}
-          </strong>
-        </div>
-        <div className="studio-rail-scroll">
-          {groups.map((group) => (
-            <section key={group.key} className="studio-rail-group">
-              <h3>
-                <b>{group.title}</b> {group.detail}
-              </h3>
-              {group.slides.map((slide) => {
-                const number = slides.indexOf(slide) + 1;
-                const active = slide.eventId === current?.eventId;
-                const answered = quizDone(slide.eventId);
-                const building = ["queued", "annotating", "designing", "checking"].includes(slide.stage);
-                return (
-                  <button
-                    key={slide.eventId}
-                    data-slide={slide.eventId}
-                    className={`studio-slide ${active ? "is-active" : ""} is-${slide.stage}`}
-                    aria-current={active ? "true" : undefined}
-                    onClick={() => choose(slide.eventId)}
-                  >
-                    <span className="studio-slide-number">{String(number).padStart(2, "0")}</span>
-                    <span className="studio-slide-thumb">
-                      <img src={slide.posterUrl} alt="" loading="lazy" />
-                      <span className={`studio-slide-status is-${slide.stage}`} title={STAGE_LABEL[slide.stage]}>
-                        {building ? (
-                          <LoaderCircle size={11} className="spin" />
-                        ) : slide.stage === "ready" ? (
-                          answered ? <Check size={11} /> : <Sparkles size={11} />
-                        ) : slide.stage === "failed" ? (
-                          <AlertTriangle size={11} />
-                        ) : null}
+    <div className={`studio-day page-enter${showRail ? "" : " is-solo"}`}>
+      {showRail && (
+        <nav className="studio-rail" aria-label="Your events" ref={rail}>
+          <div className="studio-rail-head">
+            <span className="eyebrow">Your day</span>
+            <strong>
+              {recordings === null ? "Loading…" : `${userSlides} ${userSlides === 1 ? "moment" : "moments"}`}
+            </strong>
+          </div>
+          <div className="studio-rail-scroll">
+            {groups.map((group) => (
+              <section key={group.key} className="studio-rail-group">
+                <h3>
+                  <b>{group.title}</b> {group.detail}
+                </h3>
+                {group.slides.map((slide) => {
+                  const number = slides.indexOf(slide) + 1;
+                  const active = slide.eventId === current?.eventId;
+                  const answered = quizDone(slide.eventId);
+                  const building = ["queued", "annotating", "designing", "checking"].includes(slide.stage);
+                  return (
+                    <button
+                      key={slide.eventId}
+                      data-slide={slide.eventId}
+                      className={`studio-slide ${active ? "is-active" : ""} is-${slide.stage}`}
+                      aria-current={active ? "true" : undefined}
+                      onClick={() => choose(slide.eventId)}
+                    >
+                      <span className="studio-slide-number">{String(number).padStart(2, "0")}</span>
+                      <span className="studio-slide-thumb">
+                        <img src={slide.posterUrl} alt="" loading="lazy" />
+                        <span className={`studio-slide-status is-${slide.stage}`} title={STAGE_LABEL[slide.stage]}>
+                          {building ? (
+                            <LoaderCircle size={11} className="spin" />
+                          ) : slide.stage === "ready" ? (
+                            answered ? <Check size={11} /> : <Sparkles size={11} />
+                          ) : slide.stage === "failed" ? (
+                            <AlertTriangle size={11} />
+                          ) : null}
+                        </span>
                       </span>
-                    </span>
-                    <span className="studio-slide-copy">
-                      <b>{slide.title ?? slide.subject}</b>
-                      <small>
-                        {building ? STAGE_LABEL[slide.stage] : slide.objectiveIds.map((id) => OBJECTIVE_LABEL[id] ?? id).join(" · ")}
-                      </small>
-                    </span>
-                  </button>
-                );
-              })}
-            </section>
-          ))}
-        </div>
-        <button className="studio-rail-add" onClick={onOpenDiscovery}>
-          <Plus size={15} /> Analyze a recording
-        </button>
-      </nav>
+                      <span className="studio-slide-copy">
+                        <b>{slide.title ?? slide.subject}</b>
+                        <small>
+                          {building ? STAGE_LABEL[slide.stage] : slide.objectiveIds.map((id) => OBJECTIVE_LABEL[id] ?? id).join(" · ")}
+                        </small>
+                      </span>
+                    </button>
+                  );
+                })}
+              </section>
+            ))}
+          </div>
+          <button className="studio-rail-add" onClick={onOpenDiscovery}>
+            <Plus size={15} /> Analyze a recording
+          </button>
+        </nav>
+      )}
 
       <div className="studio-main">
-        {auth === "locked" && (
-          <form className="studio-unlock" onSubmit={unlock}>
-            <LockKeyhole size={18} />
-            <div>
-              <strong>Unlock your recordings</strong>
-              <span>Enter the Discovery access code to see today's analyzed moments. The sample below works without it.</span>
-            </div>
-            <input type="password" value={code} onChange={(event) => setCode(event.target.value)} placeholder="Access code" aria-label="Access code" />
-            <button className="button primary" disabled={!code || busy}>
-              <LogIn size={14} /> Unlock
-            </button>
-          </form>
-        )}
-        {error && auth !== "locked" && <p className="studio-error">{error}</p>}
+        {error && <p className="studio-error">{error}</p>}
 
         {current && (
           <article key={current.eventId} className={`studio-stage enter-${direction}`}>
@@ -337,13 +315,36 @@ export default function YourDay({ onOpenDiscovery }: { onOpenDiscovery: () => vo
             )}
           </article>
         )}
+        {!current && recordings === null && (
+          <div className="studio-empty is-loading" role="status">
+            <LoaderCircle size={22} className="spin" />
+            <p>Looking for today's moments…</p>
+          </div>
+        )}
         {!current && recordings !== null && (
           <div className="studio-empty">
-            <ScanSearch size={26} />
+            <span className="studio-empty-mark" aria-hidden="true">
+              <ScanSearch size={26} />
+            </span>
             <h2>Your day is waiting for its first moment.</h2>
+            <p>
+              Record something everyday — a door swinging, a bike braking, a ball in the air — and Momentum turns it
+              into a lesson with a quiz and a lab.
+            </p>
             <button className="button primary" onClick={onOpenDiscovery}>
-              Analyze a recording
+              <Plus size={16} /> Analyze a recording
             </button>
+            <ol className="studio-empty-steps">
+              <li>
+                <b>01</b> Upload a clip or connect your phone camera
+              </li>
+              <li>
+                <b>02</b> Momentum finds the teachable moment
+              </li>
+              <li>
+                <b>03</b> Predict, test and explain it
+              </li>
+            </ol>
           </div>
         )}
       </div>
@@ -356,7 +357,7 @@ function StudioBody({ spec, slide }: { spec: StudioSpec; slide: DaySlide }) {
   const storageKey = `studio:${spec.eventId}`;
   const source =
     spec.provenance.kind === "agents"
-      ? `Annotated by ${/opus-4-6/.test(spec.provenance.annotator.modelId) ? "Opus 4.6" : "AI"}`
+      ? "Annotated by an agent"
       : "Prepared annotations";
   return (
     <>
@@ -407,8 +408,8 @@ function Building({
 }) {
   const stage = record?.stage ?? "queued";
   const steps = [
-    { id: "annotating", title: "Tracking the motion", detail: "Opus 4.6 reads the clip frame by frame and places the physics on the footage." },
-    { id: "designing", title: "Writing your quiz and lab", detail: "A second pass designs questions you answer on the video and a lab of the same situation." },
+    { id: "annotating", title: "Tracking the motion", detail: "An agent reads the clip frame by frame and places the physics on the footage." },
+    { id: "designing", title: "Writing your quiz and lab", detail: "A second agent designs questions you answer on the video and a lab of the same situation." },
     { id: "ready", title: "Checking the physics", detail: "Every experiment is simulated before you see it." },
   ];
   const position = stage === "designing" || stage === "checking" ? 1 : stage === "ready" ? 3 : stage === "annotating" ? 0 : -1;

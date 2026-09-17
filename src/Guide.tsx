@@ -34,8 +34,8 @@ export default function Guide({
       icon: FlaskConical,
     },
     {
-      title: "Save and practice",
-      body: "Write your explanation, save it to the notebook, then try transfer questions in Practice.",
+      title: "Save your explanation",
+      body: "Write your reasoning in your own words and save it to the notebook.",
       icon: Bookmark,
     },
   ];

@@ -92,16 +92,25 @@ test("not-physics output is distinct from a malformed response", () => {
   );
 });
 
-test("Opus 4.6 uses Bedrock structured output while Nova keeps prompt JSON", () => {
-  const opus = courseOutputConfig("us.anthropic.claude-opus-4-6-v1");
-  assert.equal(opus?.textFormat.type, "json_schema");
-  assert.match(
-    opus?.textFormat.structure.jsonSchema.schema || "",
-    /physics|questions|correctIndex/,
-  );
-  const schema = JSON.parse(opus?.textFormat.structure.jsonSchema.schema || "{}");
-  const pageSchema = schema.anyOf[0].properties.topics.items.properties.evidence.items.properties.page;
-  assert.deepEqual(pageSchema, { type: "integer" });
+test("Claude 4.6 uses Bedrock structured output while Nova keeps prompt JSON", () => {
+  for (const model of [
+    "us.anthropic.claude-opus-4-6-v1",
+    "us.anthropic.claude-sonnet-4-6",
+  ]) {
+    const structured = courseOutputConfig(model);
+    assert.equal(structured?.textFormat.type, "json_schema");
+    assert.match(
+      structured?.textFormat.structure.jsonSchema.schema || "",
+      /physics|questions|correctIndex/,
+    );
+    const schema = JSON.parse(
+      structured?.textFormat.structure.jsonSchema.schema || "{}",
+    );
+    const pageSchema =
+      schema.anyOf[0].properties.topics.items.properties.evidence.items
+        .properties.page;
+    assert.deepEqual(pageSchema, { type: "integer" });
+  }
   assert.equal(courseOutputConfig("amazon.nova-lite-v1:0"), undefined);
 });
 

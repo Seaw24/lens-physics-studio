@@ -48,6 +48,7 @@ export interface StoredCandidate extends CandidateSummary {
 }
 
 export interface StoredSession extends SessionSnapshot {
+  ownerUserId?: string;
   sourceId: string;
   sourceRelativePath: string | null;
   sourceMimeType: string | null;
@@ -223,9 +224,12 @@ export class DiscoveryStore {
   async create(
     sourceKind: StoredSession["sourceKind"],
     mode: StoredSession["mode"],
+    ownerUserId?: string,
   ) {
-    const active = [...this.sessions.values()].find((session) =>
-      ["created", "ingesting", "paused", "draining"].includes(session.state),
+    const active = [...this.sessions.values()].find(
+      (session) =>
+        ["created", "ingesting", "paused", "draining"].includes(session.state) &&
+        session.ownerUserId === ownerUserId,
     );
     if (active)
       throw new DiscoveryError(
@@ -240,6 +244,7 @@ export class DiscoveryStore {
       id,
       generation: 1,
       revision: 1,
+      ownerUserId,
       sourceKind,
       mode,
       state: "created",

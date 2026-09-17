@@ -115,6 +115,7 @@ function publicSnapshot(session: StoredSession): SessionSnapshot {
     workCache: _workCache,
     idempotency: _idempotency,
     phone: _phone,
+    ownerUserId: _ownerUserId,
     ...snapshot
   } = session;
   return snapshot;
@@ -361,6 +362,7 @@ export class DiscoveryService {
       mode: "scan" | "replay" | "live";
     },
     idempotencyKey: string,
+    ownerUserId?: string,
   ) {
     if (!this.config.enabled)
       throw new DiscoveryError(
@@ -379,7 +381,11 @@ export class DiscoveryService {
         );
       return publicSnapshot(this.store.get(prior.sessionId));
     }
-    const session = await this.store.create(input.sourceKind, input.mode);
+    const session = await this.store.create(
+      input.sourceKind,
+      input.mode,
+      ownerUserId,
+    );
     this.createIdempotency.set(idempotencyKey, {
       hash: inputHash,
       sessionId: session.id,

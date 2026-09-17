@@ -21,6 +21,8 @@ import {
 } from "../../shared/learning";
 import { DiscoveryError, safeError } from "./errors";
 import type { DiscoveryService } from "./service";
+import { AuthError, safeAuthError } from "../auth/errors";
+import type { SessionService } from "../auth/sessions";
 
 const authSchema = z.object({ code: z.string().min(1).max(512) }).strict();
 const redeemSchema = z.object({ token: z.string().min(32).max(512) }).strict();
@@ -325,7 +327,10 @@ async function parsePhoneBatch(req: Request) {
   });
 }
 
-export function createDiscoveryRouter(service: DiscoveryService) {
+export function createDiscoveryRouter(
+  service: DiscoveryService,
+  userSessions?: SessionService,
+) {
   const router = express.Router();
   router.use((req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
@@ -419,11 +424,19 @@ export function createDiscoveryRouter(service: DiscoveryService) {
   );
 
   router.use((req, _res, next) => {
-    service.auth.requireController(req);
-    next();
+    try {
+      service.auth.requireController(req);
+      return next();
+    } catch (controllerError) {
+      if (!userSessions) return next(controllerError);
+      void userSessions
+        .requireUser(req)
+        .then(() => next())
+        .catch(() => next(controllerError));
+    }
   });
-  // A camera attached to the laptop uses controller auth; phone cookies stay scoped.
-  // This shares the existing frame validation and pipeline without relaxing /frames.
+  // A camera attached to the laptop uses controller or signed-in user auth;
+  // phone cookies stay scoped to the phone capture routes above.
   router.post(
     "/sessions/:id/desktop-frames",
     limiter(300, 60_000),
@@ -452,9 +465,16 @@ export function createDiscoveryRouter(service: DiscoveryService) {
     smallJson,
     asyncRoute(async (req, res) => {
       const body = CreateSessionRequestSchema.parse(req.body);
+      const owner = userSessions ? await userSessions.optionalUser(req) : null;
       res
         .status(201)
-        .json(await service.createSession(body, requireIdempotency(req)));
+        .json(
+          await service.createSession(
+            body,
+            requireIdempotency(req),
+            owner?.id,
+          ),
+        );
     }),
   );
   router.get("/sessions", (req, res) => {
@@ -637,6 +657,11 @@ export function createDiscoveryRouter(service: DiscoveryService) {
             retryable: false,
           },
         });
+        return;
+      }
+      if (error instanceof AuthError) {
+        const safe = safeAuthError(error);
+        res.status(safe.status).json(safe.body);
         return;
       }
       const safe = safeError(error);

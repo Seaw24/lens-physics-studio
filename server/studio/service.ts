@@ -51,7 +51,7 @@ export class StudioService {
   private controller = new AbortController();
 
   constructor(readonly discovery: DiscoveryService) {
-    this.modelId = process.env.STUDIO_MODEL_ID || "us.anthropic.claude-opus-4-6-v1";
+    this.modelId = process.env.STUDIO_MODEL_ID || "us.anthropic.claude-sonnet-4-6";
     this.agents = new StudioAgents(discovery.store, discovery.transport, this.modelId);
   }
 
@@ -91,11 +91,12 @@ export class StudioService {
     });
   }
 
-  private locate(eventId: string) {
+  private locate(eventId: string, ownerUserId?: string) {
     if (!/^[a-zA-Z0-9_-]{1,160}$/.test(eventId)) return null;
     for (const summary of this.discovery.store.list()) {
       if (!summary.eventCount) continue;
       const session = this.discovery.store.get(summary.id);
+      if (ownerUserId && session.ownerUserId !== ownerUserId) continue;
       const event = session.events.find((item) => item.id === eventId);
       if (event) return { session, event };
     }
@@ -361,12 +362,13 @@ export class StudioService {
     };
   }
 
-  async day(): Promise<DayResponse> {
+  async day(ownerUserId: string): Promise<DayResponse> {
     const recordings: DayRecording[] = [];
     const seen = new Set<string>();
     for (const summary of this.discovery.store.list()) {
       if (!summary.eventCount) continue;
       const session = this.discovery.store.get(summary.id);
+      if (session.ownerUserId !== ownerUserId) continue;
       const events = this.visibleEvents(session);
       if (!events.length) continue;
       const fingerprint = await this.fingerprint(session);
@@ -389,8 +391,8 @@ export class StudioService {
     return { recordings, model: this.modelId };
   }
 
-  async event(eventId: string, enqueue = true): Promise<StudioEventResponse> {
-    const located = this.locate(eventId);
+  async event(eventId: string, enqueue = true, ownerUserId?: string): Promise<StudioEventResponse> {
+    const located = this.locate(eventId, ownerUserId);
     if (!located) throw new DiscoveryError("NOT_FOUND", "This event is no longer available.", 404);
     const { session, event } = located;
     if (event.media.mimeType !== "video/mp4")
@@ -411,18 +413,18 @@ export class StudioService {
     return { slide: await this.slide(session, event), record };
   }
 
-  async generate(eventId: string, force: boolean) {
-    const located = this.locate(eventId);
+  async generate(eventId: string, force: boolean, ownerUserId?: string) {
+    const located = this.locate(eventId, ownerUserId);
     if (!located) throw new DiscoveryError("NOT_FOUND", "This event is no longer available.", 404);
     if (this.running.has(eventId))
       throw new DiscoveryError("STUDIO_BUSY", "This studio is already being built.", 409, true);
     if (force) this.records.delete(eventId);
     this.enqueue(eventId, PRIORITY.requested, force);
-    return this.event(eventId, false);
+    return this.event(eventId, false, ownerUserId);
   }
 
-  async poster(eventId: string) {
-    const located = this.locate(eventId);
+  async poster(eventId: string, ownerUserId?: string) {
+    const located = this.locate(eventId, ownerUserId);
     if (!located) throw new DiscoveryError("NOT_FOUND", "This event is no longer available.", 404);
     const { session, event } = located;
     const file = this.posterFile(session.id, eventId);

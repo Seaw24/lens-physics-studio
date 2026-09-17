@@ -676,11 +676,11 @@ export default function EventCoach({
                 <em>more than a shot.</em>
               </h2>
               <p>
-                Your explanation is in your notebook. Carry the idea into
-                another situation.
+                Your explanation is in your notebook. Come back to Your day when
+                you are ready for another moment.
               </p>
               <button className="coach-cta" onClick={onReview}>
-                Try a new setting <ArrowRight size={16} />
+                Back to your day <ArrowRight size={16} />
               </button>
               <button className="coach-text-button" onClick={onLab}>
                 <FlaskConical size={14} /> Keep playing with the physics

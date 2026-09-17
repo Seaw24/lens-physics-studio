@@ -519,8 +519,8 @@ test("Nova proposals use a forced tool and one repair on invalid output", async 
       retirableIds: [],
     });
     assert.deepEqual(drafted.response, { lessons: [], retire: [] });
-    assert.deepEqual(called, ["us.anthropic.claude-opus-4-6-v1"]);
-    assert.equal(config.reviewerModelId, "us.anthropic.claude-opus-4-6-v1");
+    assert.deepEqual(called, ["us.anthropic.claude-sonnet-4-6"]);
+    assert.equal(config.reviewerModelId, "us.anthropic.claude-sonnet-4-6");
   } finally {
     await fs.rm(root, { recursive: true, force: true });
   }

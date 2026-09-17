@@ -298,8 +298,8 @@ export default function Investigation({
                 <div>
                   <h2>Saved to notebook</h2>
                   <p>
-                    Your explanation is saved. Try practice questions or
-                    explore another moment.
+                    Your explanation is saved. Explore another moment whenever
+                    you are ready.
                   </p>
                 </div>
                 <button className="button primary" onClick={onNext}>

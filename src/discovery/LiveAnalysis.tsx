@@ -15,7 +15,6 @@ import {
   X,
 } from "lucide-react";
 import type { CandidateSummary, SessionSnapshot } from "../../shared/discovery";
-import { modelLabel } from "../../shared/learning";
 import {
   learningApi,
   type CandidateDetail,
@@ -118,8 +117,8 @@ export default function LiveAnalysis({
   onSession: (session: SessionSnapshot) => void;
   onReset: () => void;
 }) {
-  const scout = config ? modelLabel(config.proposerModelId) : "The scout";
-  const judge = config ? modelLabel(config.reviewerModelId) : "The reviewer";
+  const scout = "Scout agent";
+  const judge = "Reviewer agent";
   const done = isTerminal(session?.state);
   const now = useNow(!done);
   const live = launch.kind === "phone" || launch.kind === "wired";

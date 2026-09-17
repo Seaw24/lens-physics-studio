@@ -313,6 +313,23 @@ main:has(.diagnostic-upload) {
   background: #8e9d72;
   border-radius: 50%;
 }
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px 11px;
+  border: 1px solid #dbe0cf;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 12px;
+  color: #5f6b56;
+}
+.sidebar-logout:hover {
+  color: #253e32;
+  border-color: #c5ceb6;
+}
 .topbar {
   height: 82px;
   border-bottom: 1px solid var(--line);
@@ -1953,10 +1970,10 @@ main:has(.diagnostic-upload) {
 }
 .diagnostic-shell {
   margin-top: 24px;
-  border: 1px solid #dce3cf;
+  border: 1px solid var(--line, #e4e8ef);
   border-radius: 8px;
-  background: #fffef9;
-  box-shadow: 0 10px 35px #29442e0a;
+  background: #fff;
+  box-shadow: 0 10px 35px rgba(11, 27, 50, 0.06);
   overflow: hidden;
 }
 .diagnostic-upload {
@@ -1972,7 +1989,7 @@ main:has(.diagnostic-upload) {
   align-items: center;
   gap: 18px;
   padding: 25px 28px;
-  border-bottom: 1px solid #e4e8dc;
+  border-bottom: 1px solid var(--line, #e4e8ef);
 }
 .diagnostic-upload .diagnostic-header {
   padding: 22px 32px;
@@ -1983,8 +2000,8 @@ main:has(.diagnostic-upload) {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #e7eed4;
-  color: #5a7544;
+  background: var(--blue-soft, #eef1ff);
+  color: var(--blue, #2b4dff);
 }
 .diagnostic-header h2 {
   font-size: 26px;
@@ -2379,9 +2396,9 @@ main:has(.diagnostic-upload) {
 }
 .material-upload-card,
 .material-paste-card {
-  border: 1px solid #dfe5d5;
+  border: 1px solid var(--line, #e4e8ef);
   border-radius: 6px;
-  background: #fffef9;
+  background: #fff;
   padding: 17px;
 }
 .diagnostic-upload .material-upload-card {
@@ -2393,21 +2410,25 @@ main:has(.diagnostic-upload) {
   border-radius: 10px;
 }
 .material-upload-card.is-dragging {
-  border-color: #849d68;
-  background: #f3f7e8;
+  border-color: var(--blue, #2b4dff);
+  background: var(--blue-soft, #eef1ff);
+  box-shadow: 0 0 0 4px rgba(43, 77, 255, 0.12);
 }
 .material-upload-card > button {
   width: 100%;
   min-height: 154px;
-  border: 1px dashed #bfcdae;
+  border: 1.5px dashed #b9c3d3;
   border-radius: 5px;
-  background: #f2f6e8;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)),
+    repeating-linear-gradient(45deg, #f3f5fa 0 8px, #fff 8px 16px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  color: #6f8759;
+  color: #425466;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 .diagnostic-upload .material-upload-card > button,
 .diagnostic-upload .pdf-analysis-progress {
@@ -2421,8 +2442,9 @@ main:has(.diagnostic-upload) {
 }
 .material-upload-card > button:hover,
 .material-upload-card.is-dragging > button {
-  border-color: #849d68;
-  background: #edf3df;
+  border-color: var(--blue, #2b4dff);
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--blue-soft, #eef1ff);
 }
 .material-upload-icon {
   width: 64px;
@@ -2430,44 +2452,47 @@ main:has(.diagnostic-upload) {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #e4edd3;
-  color: #4f6b3d;
+  background: var(--blue, #2b4dff);
+  color: #fff;
   margin-bottom: 4px;
+  box-shadow: 0 8px 22px rgba(43, 77, 255, 0.25);
 }
 .material-upload-card.is-dragging .material-upload-icon {
-  background: #d7e4bf;
+  background: var(--blue-deep, #1f3de6);
 }
 .pdf-analysis-progress {
   width: 100%;
   min-height: 154px;
-  border: 1px solid #c9d7b8;
+  border: 1.5px dashed #b9c3d3;
   border-radius: 5px;
-  background: #f2f6e8;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)),
+    repeating-linear-gradient(45deg, #f3f5fa 0 8px, #fff 8px 16px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  color: #6f8759;
+  color: #425466;
   text-align: center;
 }
 .pdf-analysis-progress strong {
-  color: #40583c;
+  color: var(--ink, #0b1b32);
   font-size: 11px;
 }
 .pdf-analysis-progress > span {
-  color: #8b9a7a;
+  color: var(--muted, #667085);
   font-size: 8px;
 }
 .pdf-analysis-progress .text-button {
   margin-top: 7px;
 }
 .material-upload-card > button strong {
-  color: #40583c;
+  color: var(--ink, #0b1b32);
   font-size: 11px;
 }
 .material-upload-card > button span:not(.material-upload-icon) {
-  color: #8b9a7a;
+  color: var(--muted, #667085);
   font-size: 8px;
 }
 .diagnostic-upload .material-upload-card > button strong,
@@ -2486,7 +2511,7 @@ main:has(.diagnostic-upload) {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  color: #98a48a;
+  color: var(--muted, #667085);
   font-size: 8px;
   line-height: 1.6;
   margin-top: 12px;
@@ -2498,7 +2523,7 @@ main:has(.diagnostic-upload) {
   max-width: 720px;
 }
 .material-privacy svg {
-  color: #7f985f;
+  color: var(--blue, #2b4dff);
   margin-top: 1px;
 }
 .material-paste-card {
@@ -4070,6 +4095,12 @@ details summary {
   .student-profile .avatar {
     width: 30px;
     height: 30px;
+  }
+  .sidebar-logout {
+    font-size: 0;
+    justify-content: center;
+    padding: 10px;
+    gap: 0;
   }
   .daily-layout {
     grid-template-columns: minmax(0, 1fr) 246px;

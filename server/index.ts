@@ -32,6 +32,9 @@ import { createDiscoveryRouter } from "./discovery/router";
 import { bedrockText } from "./bedrock";
 import { StudioService } from "./studio/service";
 import { createStudioRouter } from "./studio/router";
+import { createAuthRouter } from "./auth/router";
+import { createUserStore } from "./auth/createUserStore";
+import { SessionService } from "./auth/sessions";
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
@@ -53,12 +56,14 @@ const maxRenderedPageBytes = 3.5 * 1024 * 1024;
 const maxRenderedPdfPages = 10;
 const discoveryConfig = loadDiscoveryConfig();
 const discoveryService = await DiscoveryService.create(discoveryConfig);
+const userStore = createUserStore();
+const userSessions = new SessionService(userStore, discoveryConfig.secureCookies);
 app.disable("x-powered-by");
-// The studio shares Discovery's controller cookie, which is scoped to /api/discovery.
+// Studio is gated by the signed-in user session, not the Discovery access code.
 const studioService = new StudioService(discoveryService);
-app.use("/api/discovery/studio", createStudioRouter(studioService));
+app.use("/api/discovery/studio", createStudioRouter(studioService, userSessions));
 studioService.start();
-app.use("/api/discovery", createDiscoveryRouter(discoveryService));
+app.use("/api/discovery", createDiscoveryRouter(discoveryService, userSessions));
 app.use(express.json({ limit: "24mb" }));
 app.use("/api", (req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
@@ -98,6 +103,7 @@ app.use("/api", (req, res, next) => {
   }
   next();
 });
+app.use("/api/auth", createAuthRouter(userStore, userSessions));
 function publicError(error: unknown) {
   const name = error instanceof Error ? error.name : "";
   if (/PdfTooManyPages/.test(name))

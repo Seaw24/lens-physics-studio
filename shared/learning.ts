@@ -688,10 +688,7 @@ export function sessionScore(
   };
 }
 
-/** Short display name for a Bedrock model ID. */
-export function modelLabel(modelId: string) {
-  if (/opus-4-6/.test(modelId)) return "Opus 4.6";
-  if (/sonnet-4-6/.test(modelId)) return "Sonnet 4.6";
-  if (/nova-lite/.test(modelId)) return "Nova Lite";
-  return modelId;
+/** Short display name for a Bedrock model ID shown in the UI. */
+export function modelLabel(_modelId: string) {
+  return "Agent";
 }

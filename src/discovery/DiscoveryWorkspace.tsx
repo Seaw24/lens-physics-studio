@@ -2,17 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   BrainCircuit,
-  Cable,
-  Camera,
-  FileImage,
-  Film,
   LoaderCircle,
-  LockKeyhole,
-  LogIn,
   Radar,
   ShieldCheck,
-  Smartphone,
-  Sparkles,
   UploadCloud,
 } from "lucide-react";
 import type { SessionSnapshot } from "../../shared/discovery";
@@ -52,24 +44,12 @@ function writeActiveRun(run: ActiveRun | null) {
   }
 }
 
-function shortModelName(modelId?: string) {
-  if (!modelId) return "Connecting";
-  if (modelId.includes("nova")) return "Amazon Nova";
-  if (modelId.includes("opus")) return "Claude Opus";
-  if (modelId.includes("sonnet")) return "Claude Sonnet";
-  return modelId.split(".").at(-1)?.split("-v1")[0] || modelId;
-}
-
 export default function DiscoveryWorkspace() {
-  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
-  const [accessCode, setAccessCode] = useState("");
+  const [ready, setReady] = useState(false);
   const [config, setConfig] = useState<DiscoveryClientConfig | null>(null);
   const [initialSession, setInitialSession] = useState<SessionSnapshot | null>(
     null,
   );
-  const [sourceKind, setSourceKind] = useState<
-    "image" | "video" | "phone" | "wired"
-  >("video");
   const [mode, setMode] = useState<"scan" | "replay">("scan");
   const [launch, setLaunch] = useState<LaunchSource | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -93,41 +73,23 @@ export default function DiscoveryWorkspace() {
     [session?.events],
   );
 
-  async function loadConfig() {
-    try {
-      const next = await discoveryApi.config();
-      setConfig(next);
-      setAuthenticated(true);
-      setError("");
-    } catch (caught: any) {
-      if (caught?.status === 401) setAuthenticated(false);
-      else
-        setError(
-          caught instanceof Error
-            ? caught.message
-            : "Discovery is unavailable.",
-        );
-    }
-  }
-
   useEffect(() => {
     const controller = new AbortController();
     discoveryApi
       .config(controller.signal)
       .then((next) => {
         setConfig(next);
-        setAuthenticated(true);
+        setReady(true);
+        setError("");
       })
       .catch((caught: any) => {
-        if (caught?.status === 401) setAuthenticated(false);
-        else if (!(
-          caught instanceof DOMException && caught.name === "AbortError"
-        ))
-          setError(
-            caught instanceof Error
-              ? caught.message
-              : "Discovery is unavailable.",
-          );
+        if (caught instanceof DOMException && caught.name === "AbortError")
+          return;
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "Discovery is unavailable.",
+        );
       });
     return () => controller.abort();
   }, []);
@@ -135,7 +97,7 @@ export default function DiscoveryWorkspace() {
   // After a refresh, pick the last run back up from the server.
   useEffect(() => {
     const saved = readActiveRun();
-    if (!authenticated || !saved) return;
+    if (!ready || !saved) return;
     let cancelled = false;
     discoveryApi
       .session(saved.id)
@@ -151,7 +113,6 @@ export default function DiscoveryWorkspace() {
         }
         setInitialSession(snapshot);
         setSession(snapshot);
-        setSourceKind(saved.kind);
         setLaunch({
           kind: saved.kind,
           file: null,
@@ -176,22 +137,7 @@ export default function DiscoveryWorkspace() {
     return () => {
       cancelled = true;
     };
-  }, [authenticated]);
-
-  async function login(event: React.FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      await discoveryApi.login(accessCode);
-      await loadConfig();
-      setAccessCode("");
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Login failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  }, [ready]);
 
   /** One step from source to running analysis: create, upload, start. */
   async function run(kind: LaunchSource["kind"], file: File | null) {
@@ -285,46 +231,8 @@ export default function DiscoveryWorkspace() {
     if (fileInput.current) fileInput.current.value = "";
   }
 
-  if (authenticated === false)
-    return (
-      <section className="discovery-page page-enter">
-        <div className="discovery-auth-card">
-          <span className="discovery-auth-icon">
-            <LockKeyhole size={24} />
-          </span>
-          <span className="eyebrow">PRIVATE ANALYSIS STUDIO</span>
-          <h1>Unlock Discovery.</h1>
-          <p>
-            Enter the access code shown by the local server. Your credentials
-            and source media remain server-side.
-          </p>
-          <form onSubmit={login}>
-            <label>
-              Access code
-              <input
-                type="password"
-                autoComplete="current-password"
-                value={accessCode}
-                onChange={(event) => setAccessCode(event.target.value)}
-              />
-            </label>
-            <button className="button primary" disabled={busy || !accessCode}>
-              {busy ? (
-                <LoaderCircle className="spin" size={16} />
-              ) : (
-                <LogIn size={16} />
-              )}
-              Enter studio
-            </button>
-          </form>
-          {error && <p className="discovery-error">{error}</p>}
-        </div>
-      </section>
-    );
-
   const active = Boolean(launch);
   const done = isTerminal(session?.state);
-  const live = sourceKind === "phone" || sourceKind === "wired";
 
   return (
     <section className="discovery-page page-enter">
@@ -365,7 +273,7 @@ export default function DiscoveryWorkspace() {
               </span>
               <div>
                 <span className="model-stage-kicker">Visual scout</span>
-                <strong>{shortModelName(config?.proposerModelId)}</strong>
+                <strong>{config ? "Scout agent" : "Connecting"}</strong>
                 <p>
                   Scans the timeline and nominates moments worth a closer look.
                 </p>
@@ -383,7 +291,7 @@ export default function DiscoveryWorkspace() {
               </span>
               <div>
                 <span className="model-stage-kicker">Independent reviewer</span>
-                <strong>{shortModelName(config?.reviewerModelId)}</strong>
+                <strong>{config ? "Reviewer agent" : "Connecting"}</strong>
                 <p>
                   Checks visible evidence and approves only teachable moments.
                 </p>
@@ -395,129 +303,65 @@ export default function DiscoveryWorkspace() {
             <div className="source-card-heading">
               <div>
                 <span className="eyebrow">NEW ANALYSIS</span>
-                <h2>Choose your source</h2>
+                <h2>Add a video</h2>
               </div>
               <span>Starts as soon as you add it</span>
             </div>
-            <div
-              className="source-tabs"
-              role="tablist"
-              aria-label="Discovery source"
+            <button
+              className={`discovery-file ${dragging ? "is-dragging" : ""}`}
+              disabled={busy || !config}
+              onClick={() => fileInput.current?.click()}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setDragging(false);
+                const dropped = event.dataTransfer.files?.[0];
+                if (dropped) void run("video", dropped);
+              }}
             >
-              {(
-                [
-                  ["video", "Video", Film],
-                  ["image", "Photo", FileImage],
-                  ["wired", "iPhone USB", Cable],
-                  ["phone", "Phone Wi-Fi", Smartphone],
-                ] as const
-              ).map(([kind, label, Icon]) => (
-                <button
-                  key={kind}
-                  role="tab"
-                  aria-selected={sourceKind === kind}
-                  className={sourceKind === kind ? "active" : ""}
-                  onClick={() => {
-                    setSourceKind(kind);
-                    setError("");
-                  }}
-                >
-                  <Icon size={17} />
-                  <span>{label}</span>
-                </button>
-              ))}
+              <span className="discovery-file-icon">
+                <UploadCloud size={24} />
+              </span>
+              <strong>
+                {dragging
+                  ? "Release to start"
+                  : "Drop a video here, or click to choose"}
+              </strong>
+              <span>
+                MP4, MOV, WebM · up to 30 minutes · analysis starts right away
+              </span>
+            </button>
+            <input
+              ref={fileInput}
+              hidden
+              type="file"
+              accept="video/*"
+              onChange={(event) => {
+                const chosen = event.target.files?.[0];
+                if (chosen) void run("video", chosen);
+              }}
+            />
+            <div className="discovery-mode">
+              <span>
+                <strong>Analysis pace</strong>
+                <small>
+                  Focused scan is fastest. Replay follows the video clock.
+                </small>
+              </span>
+              <select
+                value={mode}
+                onChange={(event) =>
+                  setMode(event.target.value as "scan" | "replay")
+                }
+              >
+                <option value="scan">Focused scan · recommended</option>
+                <option value="replay">Replay at source speed</option>
+              </select>
             </div>
-
-            {!live ? (
-              <>
-                <button
-                  className={`discovery-file ${dragging ? "is-dragging" : ""}`}
-                  disabled={busy || !config}
-                  onClick={() => fileInput.current?.click()}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setDragging(true);
-                  }}
-                  onDragLeave={() => setDragging(false)}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    setDragging(false);
-                    const dropped = event.dataTransfer.files?.[0];
-                    if (dropped) void run(sourceKind, dropped);
-                  }}
-                >
-                  <span className="discovery-file-icon">
-                    <UploadCloud size={24} />
-                  </span>
-                  <strong>
-                    {dragging
-                      ? "Release to start"
-                      : `Drop a ${sourceKind === "image" ? "photo" : "video"} here, or click to choose`}
-                  </strong>
-                  <span>
-                    {sourceKind === "image"
-                      ? "JPEG, PNG, HEIC · up to 10 MB · analysis starts right away"
-                      : "MP4, MOV, WebM · up to 30 minutes · analysis starts right away"}
-                  </span>
-                </button>
-                <input
-                  ref={fileInput}
-                  hidden
-                  type="file"
-                  accept={sourceKind === "image" ? "image/*" : "video/*"}
-                  onChange={(event) => {
-                    const chosen = event.target.files?.[0];
-                    if (chosen) void run(sourceKind, chosen);
-                  }}
-                />
-                {sourceKind === "video" && (
-                  <div className="discovery-mode">
-                    <span>
-                      <strong>Analysis pace</strong>
-                      <small>
-                        Focused scan is fastest. Replay follows the video clock.
-                      </small>
-                    </span>
-                    <select
-                      value={mode}
-                      onChange={(event) =>
-                        setMode(event.target.value as "scan" | "replay")
-                      }
-                    >
-                      <option value="scan">Focused scan · recommended</option>
-                      <option value="replay">Replay at source speed</option>
-                    </select>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="phone-note">
-                  <span>
-                    <Camera size={22} />
-                  </span>
-                  <div>
-                    <strong>
-                      {sourceKind === "wired"
-                        ? "Use your iPhone as a wired camera"
-                        : "Pair a phone camera"}
-                    </strong>
-                    <p>
-                      {sourceKind === "wired"
-                        ? "Connect by USB and enable Continuity Camera. After you start, pick your iPhone and the models begin watching."
-                        : "You will get a QR code. Keep the phone page open on the same trusted HTTPS connection."}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  className="button primary discovery-prepare"
-                  disabled={busy || !config}
-                  onClick={() => void run(sourceKind, null)}
-                >
-                  <Sparkles size={16} /> Start live analysis
-                </button>
-              </>
-            )}
             {!config && !error && (
               <p className="discovery-connecting">
                 <LoaderCircle className="spin" size={14} /> Connecting to

@@ -311,7 +311,7 @@ export const courseAnalysisJsonSchema = {
 } as const;
 
 export function supportsStructuredCourseOutput(model: string) {
-  return model.includes("anthropic.claude-opus-4-6");
+  return /anthropic\.claude-(opus|sonnet)-4-6/.test(model);
 }
 
 export function courseOutputConfig(model: string) {

@@ -102,9 +102,9 @@ export function loadDiscoveryConfig(
     region: env.AWS_REGION || "us-east-1",
     proposerModelId: env.DISCOVERY_PROPOSER_MODEL_ID || "amazon.nova-lite-v1:0",
     reviewerModelId:
-      env.DISCOVERY_REVIEWER_MODEL_ID || "us.anthropic.claude-opus-4-6-v1",
+      env.DISCOVERY_REVIEWER_MODEL_ID || "us.anthropic.claude-sonnet-4-6",
     drafterModelId:
-      env.DISCOVERY_DRAFTER_MODEL_ID || "us.anthropic.claude-opus-4-6-v1",
+      env.DISCOVERY_DRAFTER_MODEL_ID || "us.anthropic.claude-sonnet-4-6",
     accessCode,
     accessCodeGenerated: !configuredCode,
     controllerBearerToken: env.DISCOVERY_CONTROLLER_BEARER_TOKEN || null,

@@ -173,3 +173,17 @@ test("timestamped video fixture probes, freezes frames, and produces an accurate
     await fs.rm(root, { recursive: true, force: true });
   }
 });
+
+test("active ingest sessions are limited per owner, not across accounts", async () => {
+  const { root, store } = await fixture();
+  try {
+    const first = await store.create("video", "scan", "user-a");
+    const second = await store.create("phone", "live", "user-b");
+    assert.equal(first.ownerUserId, "user-a");
+    assert.equal(second.ownerUserId, "user-b");
+    await assert.rejects(store.create("image", "scan", "user-a"), /active ingest session/);
+  } finally {
+    await store.close();
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});

@@ -14,10 +14,10 @@ import {
   Eye,
   Film,
   FlaskConical,
-  Layers3,
   Leaf,
   Lightbulb,
   LoaderCircle,
+  LogOut,
   Play,
   Plus,
   RotateCcw,
@@ -47,16 +47,23 @@ import CourseDiagnostic from "./CourseDiagnostic";
 import Guide from "./Guide";
 import VideoPlayer from "./VideoPlayer";
 import Landing from "./Landing";
-import { BasketballArt } from "./Projectile";
 import DiscoveryWorkspace from "./discovery/DiscoveryWorkspace";
 import YourDay from "./studio/YourDay";
+import AuthScreen from "./auth/AuthScreen";
+import { authApi } from "./auth/api";
+import {
+  clearLocalUserData,
+  readActiveUserId,
+  setActiveUserId,
+  shouldResetLocalData,
+} from "./auth/localUserData";
+import type { PublicUser } from "../shared/auth";
 
 type Page =
   | "today"
   | "discovery"
   | "course"
   | "moments"
-  | "review"
   | "investigate"
   | "guide";
 type Modal = "settings" | "present" | "upload" | null;
@@ -138,13 +145,19 @@ export default function App() {
     [progress, setProgress] = useState(0),
     [uploadError, setUploadError] = useState(""),
     [sampleCount, setSampleCount] = useState(0),
-    [presentationStep, setPresentationStep] = useState(0);
+    [presentationStep, setPresentationStep] = useState(0),
+    [user, setUser] = useState<PublicUser | null>(null),
+    [authLoading, setAuthLoading] = useState(true),
+    [showAuth, setShowAuth] = useState(false),
+    [workspaceKey, setWorkspaceKey] = useState(0),
+    [includeSample, setIncludeSample] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null),
     objectUrl = useRef(""),
     analysis = useRef<AbortController | null>(null),
     seen = useRef(new Set<string>()),
     modalRef = useRef<HTMLDivElement>(null),
-    lastFocus = useRef<HTMLElement | null>(null);
+    lastFocus = useRef<HTMLElement | null>(null),
+    pendingEnterRef = useRef<(() => void) | null>(null);
   // Pages stay mounted after their first visit so in-progress work survives navigation.
   const visited = useRef(new Set<Page>());
   visited.current.add(page);
@@ -161,13 +174,111 @@ export default function App() {
       );
     }
   }
+  function resetWorkspaceForUser(nextUser: PublicUser, isSignup = false) {
+    if (!shouldResetLocalData(nextUser.id, isSignup)) {
+      setActiveUserId(nextUser.id);
+      return;
+    }
+    clearLocalUserData();
+    setActiveUserId(nextUser.id);
+    analysis.current?.abort();
+    if (objectUrl.current) {
+      URL.revokeObjectURL(objectUrl.current);
+      objectUrl.current = "";
+    }
+    seen.current.clear();
+    visited.current = new Set<Page>(["today"]);
+    setPage("today");
+    setModal(null);
+    setMoments(DEMO_MOMENTS);
+    setSelected("shot");
+    setSrc("/demo/basketball-shot.mp4");
+    setFileName("Sample: basketball shot");
+    setIsDemo(true);
+    setSeek({ time: 14.2, nonce: Date.now() });
+    setRate(1);
+    setAutoPlay(false);
+    setRecords([]);
+    setToast("");
+    setAvailable(true);
+    setDiscovery(false);
+    setInvitation(null);
+    setDeferred([]);
+    setStage("idle");
+    setProgress(0);
+    setUploadError("");
+    setSampleCount(0);
+    setPresentationStep(0);
+    setIncludeSample(false);
+    setWorkspaceKey((key) => key + 1);
+  }
   useEffect(() => {
     refreshStatus();
+    authApi
+      .me()
+      .then((result) => {
+        const sessionUser = result.user;
+        const previous = readActiveUserId();
+        if (previous && previous !== sessionUser.id) resetWorkspaceForUser(sessionUser);
+        else setActiveUserId(sessionUser.id);
+        setUser(sessionUser);
+      })
+      .catch(() => setUser(null))
+      .finally(() => setAuthLoading(false));
     return () => {
       analysis.current?.abort();
       if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
     };
   }, []);
+  async function logout() {
+    try {
+      await authApi.logout();
+    } catch {
+      // Leave the studio even if the server is unreachable.
+    }
+    setUser(null);
+    setModal(null);
+    setShowAuth(false);
+    pendingEnterRef.current = null;
+    setLanding(true);
+    navigate("today");
+  }
+  function requireAuth(action: () => void) {
+    pendingEnterRef.current = action;
+    if (authLoading) return;
+    if (user) {
+      pendingEnterRef.current = null;
+      action();
+      return;
+    }
+    setShowAuth(true);
+  }
+  function completeAuth(
+    next: PublicUser,
+    options?: { isSignup?: boolean },
+  ) {
+    resetWorkspaceForUser(next, Boolean(options?.isSignup));
+    setUser(next);
+    setShowAuth(false);
+    const pending = pendingEnterRef.current;
+    pendingEnterRef.current = null;
+    pending?.();
+  }
+  function cancelAuth() {
+    setShowAuth(false);
+    pendingEnterRef.current = null;
+  }
+  useEffect(() => {
+    if (authLoading) return;
+    const pending = pendingEnterRef.current;
+    if (!pending) return;
+    if (user) {
+      pendingEnterRef.current = null;
+      pending();
+      return;
+    }
+    setShowAuth(true);
+  }, [authLoading, user]);
   useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(""), 4500);
@@ -382,27 +493,36 @@ export default function App() {
   );
   const navItems = [
     { id: "today", label: "Your day", icon: Eye },
-    { id: "discovery", label: "Discovery", icon: ScanSearch },
     { id: "course", label: "Your course", icon: BookOpen },
+    { id: "discovery", label: "Discovery", icon: ScanSearch },
     { id: "moments", label: "Notebook", icon: Bookmark },
-    { id: "review", label: "Practice & recall", icon: Layers3 },
     { id: "guide", label: "Guide & about", icon: CircleHelp },
   ] as const;
+  const landingProps = {
+    onEnter: () => requireAuth(() => setLanding(false)),
+    onSample: () =>
+      requireAuth(() => {
+        useDemo();
+        setIncludeSample(true);
+        setLanding(false);
+      }),
+    onUpload: () =>
+      requireAuth(() => {
+        setLanding(false);
+        setTimeout(() => fileInput.current?.click(), 60);
+      }),
+  };
+  if (showAuth) {
+    return (
+      <AuthScreen onAuthenticated={completeAuth} onBack={cancelAuth} />
+    );
+  }
+  if (landing || !user) {
+    return <Landing {...landingProps} />;
+  }
+  const profileInitial = user.displayName.trim().charAt(0).toUpperCase() || "L";
   return (
     <div className={`app-shell ${page === "today" ? "studio-mode" : ""}`}>
-      {landing && (
-        <Landing
-          onEnter={() => setLanding(false)}
-          onSample={() => {
-            useDemo();
-            setLanding(false);
-          }}
-          onUpload={() => {
-            setLanding(false);
-            setTimeout(() => fileInput.current?.click(), 60);
-          }}
-        />
-      )}
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
@@ -450,28 +570,60 @@ export default function App() {
             <Settings2 size={18} /> Studio settings
           </button>
           <div className="student-profile">
-            <span className="avatar">N</span>
+            <span className="avatar">{profileInitial}</span>
             <div>
-              <strong>Nam’s learning space</strong>
-              <small>Student</small>
+              <strong>{user.displayName}</strong>
+              <small>{user.email}</small>
             </div>
-            <span className="profile-dot" />
           </div>
+          <button
+            type="button"
+            className="sidebar-logout"
+            onClick={() => void logout()}
+          >
+            <LogOut size={16} /> Log out
+          </button>
         </div>
       </aside>
       <div className="main-shell">
         <main id="main-content" tabIndex={-1}>
           <KeepAlive
-            active={page === "discovery"}
-            mounted={visited.current.has("discovery")}
-          >
-            <DiscoveryWorkspace />
-          </KeepAlive>
-          <KeepAlive
             active={page === "today"}
             mounted={visited.current.has("today")}
           >
-            <YourDay onOpenDiscovery={() => navigate("discovery")} />
+            <YourDay
+              key={workspaceKey}
+              includeSample={includeSample}
+              onOpenDiscovery={() => navigate("discovery")}
+            />
+          </KeepAlive>
+          <KeepAlive
+            active={page === "course"}
+            mounted={visited.current.has("course")}
+          >
+            <div className="course-page page-enter">
+              <div className="eyebrow">YOUR COURSE</div>
+              <h1>
+                Start with <em>what you need now.</em>
+              </h1>
+              <p className="page-intro">
+                Momentum maps your course PDF, checks your starting point, and
+                gives you one clear next lesson.
+              </p>
+              <CourseDiagnostic
+                key={workspaceKey}
+                bedrockAvailable={Boolean(status?.configured)}
+                onOpenSettings={() => setModal("settings")}
+                onSave={saveRecord}
+                onOpenNotebook={() => navigate("moments")}
+              />
+            </div>
+          </KeepAlive>
+          <KeepAlive
+            active={page === "discovery"}
+            mounted={visited.current.has("discovery")}
+          >
+            <DiscoveryWorkspace key={workspaceKey} />
           </KeepAlive>
           <KeepAlive
             active={page === "investigate"}
@@ -493,30 +645,9 @@ export default function App() {
                     prev.map((m) => (m.id === updated.id ? updated : m)),
                   )
                 }
-                onNext={() => navigate("review")}
+                onNext={() => navigate("today")}
               />
             )}
-          </KeepAlive>
-          <KeepAlive
-            active={page === "course"}
-            mounted={visited.current.has("course")}
-          >
-            <div className="course-page page-enter">
-              <div className="eyebrow">YOUR COURSE</div>
-              <h1>
-                Start with <em>what you need now.</em>
-              </h1>
-              <p className="page-intro">
-                Momentum maps your course PDF, checks your starting point, and
-                gives you one clear next lesson.
-              </p>
-              <CourseDiagnostic
-                bedrockAvailable={Boolean(status?.configured)}
-                onOpenSettings={() => setModal("settings")}
-                onSave={saveRecord}
-                onOpenNotebook={() => navigate("moments")}
-              />
-            </div>
           </KeepAlive>
           <KeepAlive
             active={page === "moments"}
@@ -648,21 +779,9 @@ export default function App() {
                       </button>
                     </article>
                   ))}
-                  <button
-                    className="button primary"
-                    onClick={() => navigate("review")}
-                  >
-                    Try it in a different setting <ArrowRight size={16} />
-                  </button>
                 </>
               )}
             </div>
-          </KeepAlive>
-          <KeepAlive
-            active={page === "review"}
-            mounted={visited.current.has("review")}
-          >
-            <Review records={records} onExplore={() => navigate("today")} />
           </KeepAlive>
           <KeepAlive
             active={page === "guide"}
@@ -751,7 +870,7 @@ export default function App() {
                       </span>
                       <p>
                         {status?.configured
-                          ? `${status.model} · ${status.region}`
+                          ? `Connected · ${status.region}`
                           : "Not configured yet. Add workshop credentials on the server to enable open-ended tutoring."}
                       </p>
                       {mode === "bedrock" && <Check size={16} />}
@@ -773,7 +892,7 @@ export default function App() {
                     </p>
                     <p>
                       Credentials stay on the local server. Use a vision-capable
-                      Nova model for video analysis. No credentials belong in
+                      model for video analysis. No credentials belong in
                       this browser.
                     </p>
                   </details>
@@ -791,10 +910,13 @@ export default function App() {
                   <div className="privacy-row">
                     <Bookmark size={19} />
                     <p>
-                      Your notebook is stored in this browser. The prototype has
-                      no account system or cross-device sync.
+                      Your notebook is stored in this browser for your signed-in
+                      account on this device. There is no cross-device sync yet.
                     </p>
                   </div>
+                  <button className="button secondary" onClick={() => void logout()}>
+                    <LogOut size={15} /> Log out
+                  </button>
                   <div className="privacy-row">
                     <BookOpen size={19} />
                     <p>
@@ -1066,178 +1188,6 @@ export default function App() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Review({
-  records,
-  onExplore,
-}: {
-  records: LearningRecord[];
-  onExplore: () => void;
-}) {
-  const questions = [
-    {
-      id: "apex",
-      concept: "GRAVITY / A NEW SETTING",
-      title: "A volleyball reaches its peak.",
-      context:
-        "A volleyball has left the player’s hand and reached the highest point of its flight. Ignore air resistance.",
-      question: "What is its acceleration at this instant?",
-      options: ["Zero", "9.81 m/s² down", "9.81 m/s² up"],
-      answer: "9.81 m/s² down",
-      explanation:
-        "Gravity acts throughout free flight. Vertical velocity is zero at the peak, but the acceleration is still 9.81 m/s² downward.",
-    },
-    {
-      id: "horizontal",
-      concept: "COMPONENTS / FOLLOW THE MOTION",
-      title: "The ball keeps travelling.",
-      context:
-        "A basketball travels through the air after release. Gravity is the only force in our ideal model.",
-      question: "What happens to its horizontal velocity?",
-      options: ["It increases", "It stays constant", "It becomes zero"],
-      answer: "It stays constant",
-      explanation:
-        "With zero horizontal net force, horizontal acceleration is zero. Gravity changes the vertical component, while horizontal velocity stays constant.",
-    },
-    {
-      id: "mass",
-      concept: "TRANSFER / CHANGE THE BALL",
-      title: "A heavier ball. A different path?",
-      context:
-        "Two balls have different masses but the same launch speed, angle, and height. Ignore air resistance.",
-      question: "Which ball lands first?",
-      options: ["The heavier ball", "The lighter ball", "They land together"],
-      answer: "They land together",
-      explanation:
-        "Both have the same gravitational acceleration and identical launch conditions. Their ideal trajectories and flight times are the same, regardless of mass.",
-    },
-  ];
-  const [index, setIndex] = useState(0),
-    [choice, setChoice] = useState(""),
-    [checked, setChecked] = useState(false),
-    [results, setResults] = useState<Record<string, boolean>>({});
-  const q = questions[index],
-    correct = choice === q.answer;
-  return (
-    <div className="review-page page-enter">
-      <div className="eyebrow">PRACTICE & RECALL</div>
-      <h1>
-        Same idea.
-        <br />
-        <em>A different everyday.</em>
-      </h1>
-      <p className="page-intro">
-        Can you recognize the relationship when the scene changes? Try before
-        looking back.
-      </p>
-      <div className="review-layout">
-        <section className="review-card">
-          <div className="review-progress">
-            <span>{q.concept}</span>
-            <span>{index + 1} / 3</span>
-          </div>
-          <div className="wrench-art" aria-hidden="true">
-            <BasketballArt />
-          </div>
-          <h2>{q.title}</h2>
-          <p>{q.context}</p>
-          <h3>{q.question}</h3>
-          <div className="review-options">
-            {q.options.map((option) => (
-              <button
-                key={option}
-                disabled={checked}
-                className={`${choice === option ? "selected" : ""} ${checked && option === q.answer ? "correct" : ""}`}
-                aria-pressed={choice === option}
-                onClick={() => setChoice(option)}
-              >
-                <span>{option}</span>
-                {checked && option === q.answer && <Check size={17} />}
-              </button>
-            ))}
-          </div>
-          {checked ? (
-            <>
-              <div
-                className={`answer-feedback ${correct ? "correct" : "try-again"}`}
-                role="status"
-              >
-                <div>
-                  <strong>
-                    {correct
-                      ? "You carried the idea into a new setting."
-                      : "A useful place to revisit."}
-                  </strong>
-                  <p>{q.explanation}</p>
-                </div>
-              </div>
-              <button
-                className="button primary"
-                onClick={() => {
-                  setIndex((index + 1) % 3);
-                  setChoice("");
-                  setChecked(false);
-                }}
-              >
-                Try another connection <ArrowRight size={15} />
-              </button>
-            </>
-          ) : (
-            <button
-              className="button primary"
-              disabled={!choice}
-              onClick={() => {
-                setChecked(true);
-                setResults((prev) => ({ ...prev, [q.id]: correct }));
-              }}
-            >
-              Check my answer <ArrowRight size={15} />
-            </button>
-          )}
-        </section>
-        <aside className="review-aside">
-          <span className="eyebrow">BUILDING THE CONNECTION</span>
-          <h2>
-            Remember the idea,
-            <br />
-            not just the answer.
-          </h2>
-          <p>
-            These practice questions change the object or launch conditions.
-            That’s how you check whether the relationship travels with you.
-          </p>
-          <div className="review-stats">
-            <span>
-              {Object.keys(results).length}
-              <small>attempted this session</small>
-            </span>
-            <span>
-              {Object.values(results).filter(Boolean).length}
-              <small>correct on latest attempt</small>
-            </span>
-          </div>
-          {records.find((r) => r.concept === "projectile") ? (
-            <div className="past-reflection">
-              <Bookmark size={17} />
-              <span className="eyebrow">YOUR EARLIER EXPLANATION</span>
-              <details>
-                <summary>Look back after you try</summary>
-                <p>
-                  “{records.find((r) => r.concept === "projectile")?.reflection}
-                  ”
-                </p>
-              </details>
-            </div>
-          ) : (
-            <button className="text-button" onClick={onExplore}>
-              Explore the original moment <ArrowUpRight size={15} />
-            </button>
-          )}
-        </aside>
-      </div>
     </div>
   );
 }
