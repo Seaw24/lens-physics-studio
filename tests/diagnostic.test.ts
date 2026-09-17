@@ -4,7 +4,12 @@ import {
   analyzeCourseSources,
   buildDiagnostic,
   gradeDiagnostic,
+  missedAttempts,
   nextLessonFor,
+  remediationOpening,
+  signalsUnderstanding,
+  verificationQuestionsFor,
+  courseNotebookRecord,
   type CourseAnalysis,
   type CourseSource,
 } from "../shared/diagnostic";
@@ -77,6 +82,79 @@ test("diagnostic selection and grading produce a targeted next lesson", () => {
   assert.equal(vectors?.status, "review");
   assert.match(vectors?.note || "", /Sine|component/i);
   assert.equal(nextLessonFor(results).topic, "vectors");
+});
+
+test("missed attempts and verification questions stay off the original items", () => {
+  const map = analyzeCourseSources([
+    source(
+      "Projectile launch and apex. Resolve the velocity vector into horizontal and vertical components using sine and cosine.",
+    ),
+  ]);
+  const questions = buildDiagnostic(map);
+  const answers = Object.fromEntries(
+    questions.map((question) => [
+      question.id,
+      (question.correctIndex + 1) % question.options.length,
+    ]),
+  );
+  const missed = missedAttempts(questions, answers);
+  assert.equal(missed.length, 5);
+  const check = verificationQuestionsFor(
+    missed,
+    questions.map((question) => question.id),
+    2,
+  );
+  assert.equal(check.length, 2);
+  assert.equal(
+    check.some((question) =>
+      questions.some((original) => original.id === question.id),
+    ),
+    false,
+  );
+  assert.match(
+    remediationOpening(missed, map.focus),
+    /in your own words/i,
+  );
+});
+
+test("self-reported understanding is a cue, not a vague ok", () => {
+  assert.equal(signalsUnderstanding("I understand now"), true);
+  assert.equal(signalsUnderstanding("ok"), false);
+});
+
+test("a finished transfer check becomes a course notebook record", () => {
+  const map = analyzeCourseSources([
+    source(
+      "Projectile launch and apex. Resolve the velocity vector into horizontal and vertical components using sine and cosine.",
+    ),
+  ]);
+  const questions = buildDiagnostic(map);
+  const answers = Object.fromEntries(
+    questions.map((question) => [
+      question.id,
+      (question.correctIndex + 1) % question.options.length,
+    ]),
+  );
+  const missed = missedAttempts(questions, answers);
+  const check = verificationQuestionsFor(
+    missed,
+    questions.map((question) => question.id),
+    2,
+  );
+  const record = courseNotebookRecord({
+    focus: map.focus,
+    title: "What survives at the top?",
+    missed,
+    check,
+    checkAnswers: Object.fromEntries(
+      check.map((question) => [question.id, question.correctIndex]),
+    ),
+    mode: "rehearsal",
+  });
+  assert.equal(record.kind, "course");
+  assert.match(record.id, /^course-/);
+  assert.equal(record.answer, "2/2 transferred");
+  assert.match(record.reflection, /held up in a new situation/i);
 });
 
 test("validated Bedrock analysis overrides local keyword mapping and supplies its questions", () => {

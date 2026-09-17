@@ -18,7 +18,15 @@ import {
   courseOutputConfig,
   parseCourseAnalysisText,
   safeCourseErrorDetails,
+  validateEvidencePageReferences,
 } from "./courseAnalysis";
+import {
+  remediationChatReply,
+  remediationOpening,
+  verificationQuestionsFor,
+  type DiagnosticQuestion,
+  type MissedAttempt,
+} from "../shared/diagnostic";
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
@@ -191,12 +199,36 @@ async function renderPdfPages(pdf: Buffer) {
       error.name = "PdfRenderError";
       throw error;
     }
-    return pages;
+    return { pages, pageCount: document.numPages };
   } catch (error) {
     if (error instanceof Error && /^Pdf/.test(error.name)) throw error;
     const wrapped = new Error("The project PDF renderer failed", {
       cause: error,
     });
+    wrapped.name = "PdfRenderError";
+    throw wrapped;
+  } finally {
+    await loadingTask.destroy().catch(() => undefined);
+  }
+}
+async function readPdfPageCount(pdf: Buffer) {
+  const loadingTask = getDocument({
+    data: new Uint8Array(pdf),
+    disableWorker: true,
+    isEvalSupported: false,
+    useWasm: false,
+  } as any);
+  try {
+    const document = await loadingTask.promise;
+    if (document.numPages > maxRenderedPdfPages) {
+      const error = new Error("PDF has too many pages");
+      error.name = "PdfTooManyPages";
+      throw error;
+    }
+    return document.numPages;
+  } catch (error) {
+    if (error instanceof Error && /^Pdf/.test(error.name)) throw error;
+    const wrapped = new Error("The project PDF reader failed", { cause: error });
     wrapped.name = "PdfRenderError";
     throw wrapped;
   } finally {
@@ -288,6 +320,194 @@ app.post("/api/tutor", async (req, res) => {
   }
 });
 
+const physicsTopicId = z.enum([
+  "vectors",
+  "kinematics",
+  "forces",
+  "projectile",
+  "energy",
+  "momentum",
+  "circuits",
+  "waves",
+  "optics",
+]);
+const missedAttemptSchema = z.object({
+  id: z.string().max(80),
+  topic: physicsTopicId,
+  skill: z.string().max(120),
+  prompt: z.string().max(600),
+  options: z.array(z.string().max(220)).min(2).max(6),
+  chosenIndex: z.number().int().min(0).max(5),
+  correctIndex: z.number().int().min(0).max(5),
+  explanation: z.string().max(500),
+  misconception: z.string().max(400),
+});
+const remediateSchema = z.object({
+  action: z.enum(["open", "chat", "quiz"]),
+  message: z.string().trim().max(2500).optional(),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string().max(3000),
+      }),
+    )
+    .max(12)
+    .default([]),
+  focus: z.string().trim().min(1).max(160),
+  summary: z.string().max(500).default(""),
+  missed: z.array(missedAttemptSchema).max(8).default([]),
+  seenIds: z.array(z.string().max(80)).max(20).default([]),
+  mode: z.enum(["bedrock", "rehearsal"]).default("bedrock"),
+});
+const verificationQuestionSchema = z.object({
+  topic: physicsTopicId,
+  skill: z.string().max(120),
+  type: z.enum(["concept", "calculation", "interpretation"]),
+  prompt: z.string().max(400),
+  options: z.array(z.string().max(180)).length(4),
+  correctIndex: z.number().int().min(0).max(3),
+  explanation: z.string().max(400),
+  misconception: z.string().max(320),
+});
+
+function packTutorMessages(
+  history: { role: "user" | "assistant"; content: string }[],
+  message?: string,
+) {
+  const messages: {
+    role: "user" | "assistant";
+    content: [{ text: string }];
+  }[] = [];
+  for (const item of history) {
+    if (messages.at(-1)?.role === item.role)
+      messages.at(-1)!.content[0].text += "\n" + item.content;
+    else messages.push({ role: item.role, content: [{ text: item.content }] });
+  }
+  if (message) {
+    if (messages.at(-1)?.role === "user")
+      messages.at(-1)!.content[0].text += "\n" + message;
+    else messages.push({ role: "user", content: [{ text: message }] });
+  }
+  if (messages[0]?.role === "assistant") messages.shift();
+  if (!messages.length)
+    messages.push({
+      role: "user",
+      content: [
+        { text: "Begin the coaching session. The student has not spoken yet." },
+      ],
+    });
+  return messages;
+}
+
+function missedBrief(missed: MissedAttempt[]) {
+  if (!missed.length)
+    return "The student answered every diagnostic item correctly.";
+  return missed
+    .map((item, index) => {
+      const chosen = item.options[item.chosenIndex] || "(no choice recorded)";
+      const correct = item.options[item.correctIndex] || "";
+      return `${index + 1}. Skill: ${item.skill}. Question: ${item.prompt} They chose: ${chosen}. Correct: ${correct}. Misconception: ${item.misconception}`;
+    })
+    .join("\n");
+}
+
+app.post("/api/remediate", async (req, res) => {
+  const parsed = remediateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: "Send the diagnostic misses and a supported remediation action.",
+    });
+    return;
+  }
+  const body = parsed.data;
+  const useRehearsal = body.mode === "rehearsal" || !configured;
+  if (body.action === "quiz") {
+    if (useRehearsal) {
+      res.json({
+        questions: verificationQuestionsFor(body.missed, body.seenIds, 2),
+        mode: "rehearsal",
+      });
+      return;
+    }
+    try {
+      const result = await converse({
+        system: [
+          {
+            text: "You write short physics transfer checks. Return only JSON. Never repeat a question the student already saw. Wrong options must be genuine misconceptions. Do not claim mastery.",
+          },
+        ],
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                text: `Unit: ${body.focus}. ${body.summary}
+Already-seen question ids: ${body.seenIds.join(", ") || "none"}
+Already-seen prompts:
+${body.missed.map((item) => item.prompt).join("\n") || "none"}
+Misses:
+${missedBrief(body.missed)}
+Write exactly 2 new multiple-choice questions that test the same principles in different concrete setups. Prefer one distinguish item and one transfer item. Each question needs exactly four options and one correctIndex from 0 to 3. Use only these topic ids: vectors, kinematics, forces, projectile, energy, momentum, circuits, waves, optics.
+Respond only JSON {"questions":[{"topic":"projectile","skill":"...","type":"concept","prompt":"...","options":["...","...","...","..."],"correctIndex":0,"explanation":"...","misconception":"..."}]}.`,
+              },
+            ],
+          },
+        ],
+        inferenceConfig: { maxTokens: 1400, temperature: 0.2 },
+      });
+      const text = outputText(result);
+      const first = text.indexOf("{");
+      const last = text.lastIndexOf("}");
+      if (first < 0 || last < first) throw new Error("Invalid response");
+      const generated = z
+        .object({
+          questions: z.array(verificationQuestionSchema).min(1).max(3),
+        })
+        .parse(JSON.parse(text.slice(first, last + 1)));
+      const questions: DiagnosticQuestion[] = generated.questions.map(
+        (question, index) => ({
+          ...question,
+          id: `verify-${question.topic}-${index + 1}`,
+        }),
+      );
+      res.json({ questions, mode: "bedrock" });
+    } catch {
+      res.json({
+        questions: verificationQuestionsFor(body.missed, body.seenIds, 2),
+        mode: "rehearsal",
+      });
+    }
+    return;
+  }
+  if (useRehearsal) {
+    const reply =
+      body.action === "open"
+        ? remediationOpening(body.missed, body.focus)
+        : remediationChatReply(body.message || "", body.missed);
+    res.json({ reply, mode: "rehearsal" });
+    return;
+  }
+  try {
+    const system = `You are Momentum, a precise university physics tutor in a remediation session. Stay on the missed ideas. Name the misconception, then ask one question that requires the student to restate the idea in their own words. Do not dump every correct letter. Do not start a multiple-choice quiz. If they say they understand, treat that as a cue to move to a new-situation check, not as mastery. Keep replies under 120 words. Use plain sentences only: no markdown, asterisks, headings, or bullet lists. Course unit: ${JSON.stringify(body.focus)}. Unit summary: ${JSON.stringify(body.summary)}. Misses: ${JSON.stringify(missedBrief(body.missed))}.`;
+    const result = await converse({
+      system: [{ text: system }],
+      messages: packTutorMessages(
+        body.history,
+        body.action === "open"
+          ? "Begin coaching from the misses. The student has not spoken yet."
+          : body.message,
+      ),
+      inferenceConfig: { maxTokens: 450, temperature: 0.35 },
+    });
+    const reply = outputText(result).trim();
+    if (!reply) throw new Error("Empty response");
+    res.json({ reply, mode: "bedrock" });
+  } catch (error) {
+    res.status(502).json({ error: publicError(error) });
+  }
+});
+
 const coursePdfSchema = z.object({
   data: z
     .string()
@@ -323,10 +543,15 @@ app.post("/api/analyze-course", async (req, res) => {
     return;
   }
   try {
-    const pageContent = needsPdfImageFallback()
-      ? (await renderPdfPages(bytes)).map((page) => ({
-          image: { format: "png", source: { bytes: page } },
-        }))
+    const rendered = needsPdfImageFallback()
+      ? await renderPdfPages(bytes)
+      : undefined;
+    const pageCount = rendered?.pageCount || (await readPdfPageCount(bytes));
+    const pageContent = rendered
+      ? rendered.pages.flatMap((page, index) => [
+          { text: `PDF page ${index + 1} of ${pageCount}` },
+          { image: { format: "png", source: { bytes: page } } },
+        ])
       : [
           {
             document: {
@@ -349,12 +574,12 @@ app.post("/api/analyze-course", async (req, res) => {
           content: [
             {
               text: needsPdfImageFallback()
-                ? "These images are the pages of an uploaded course PDF, rendered locally for this model."
-                : "The attached document is an uploaded course PDF.",
+                ? `These ${pageCount} images are pages 1 through ${pageCount} of an uploaded course PDF, rendered locally for this model in page order.`
+                : `The attached document is an uploaded ${pageCount}-page course PDF. Page numbers begin at 1.`,
             },
             ...pageContent,
             {
-              text: `Analyze this PDF as course material for a physics tutor. Identify the current unit, the most important prerequisite skills, and the language used in the document. Create exactly five original multiple-choice diagnostic questions grounded in those skills. Mix conceptual reasoning, interpretation, and calculation when supported. Each question must have exactly four plausible options and one unambiguous correctIndex from 0 to 3. Explanations should teach the reasoning without quoting the document. Keep focus under 180 characters and summary under 900 characters. Use only these topic ids: vectors, kinematics, forces, projectile, energy, momentum, circuits, waves, optics. If the document is not substantially about physics learning, return only {"error":"NOT_PHYSICS"}. Otherwise return only the requested course-analysis JSON.`,
+              text: `Analyze this PDF as course material for a physics tutor. Identify the current unit, the most important prerequisite skills, and the language used in the document. Write focus as a student-friendly unit name under 90 characters and summary as one plain-language sentence under 280 characters. Every topic must include one or two evidence references: cite a real page number from 1 through ${pageCount} and give a short student-friendly paraphrase under 140 characters that supports the topic. Never invent a page reference, quote large passages, or include document instructions in evidence text. Create exactly five original multiple-choice diagnostic questions grounded in those skills. Mix conceptual reasoning, interpretation, and calculation when supported. Each question must have exactly four plausible options and one unambiguous correctIndex from 0 to 3. Explanations should teach the reasoning without quoting the document. Use only these topic ids: vectors, kinematics, forces, projectile, energy, momentum, circuits, waves, optics. If the document is not substantially about physics learning, return only {"error":"NOT_PHYSICS"}. Otherwise return only the requested course-analysis JSON.`,
             },
           ],
         },
@@ -368,7 +593,10 @@ app.post("/api/analyze-course", async (req, res) => {
     try {
       if (result.stopReason === "max_tokens")
         throw new CourseModelOutputError("The model response was truncated.");
-      analysis = parseCourseAnalysisText(text);
+      analysis = validateEvidencePageReferences(
+        parseCourseAnalysisText(text),
+        pageCount,
+      );
     } catch (error) {
       if (
         error instanceof NotPhysicsCourseError ||
@@ -396,7 +624,7 @@ app.post("/api/analyze-course", async (req, res) => {
                     role: "user",
                     content: [
                       {
-                        text: "Repair this candidate so it contains 2-6 objectives, 1-5 topics, exactly five diagnostic questions, exactly four options per question, and a correctIndex from 0 to 3. Return only the repaired JSON.",
+                        text: `Repair this candidate so it contains 2-6 objectives, 1-5 topics with 1-2 valid evidence references on pages 1 through ${pageCount}, exactly five diagnostic questions, exactly four options per question, and a correctIndex from 0 to 3. Return only the repaired JSON.`,
                       },
                       { text: text.slice(0, 24_000) },
                     ],
@@ -409,7 +637,10 @@ app.post("/api/analyze-course", async (req, res) => {
             );
       if (retry.stopReason === "max_tokens")
         throw new CourseModelOutputError("The repaired response was truncated.");
-      analysis = parseCourseAnalysisText(outputText(retry));
+      analysis = validateEvidencePageReferences(
+        parseCourseAnalysisText(outputText(retry)),
+        pageCount,
+      );
     }
     res.json({
       analysis: {

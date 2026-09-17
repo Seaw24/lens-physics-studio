@@ -7,9 +7,9 @@
   --green: #2b4dff; --deep: #0b1b32; --line: #e4e8ef; --accent: #eef1ff;
   --blue: #2b4dff; --blue-deep: #1f3de6; --blue-soft: #eef1ff;
   --hot: #ff6a1f; --hot-deep: #e05a12; --hot-ink: #ffffff;
-  --mono: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --serif: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --sans: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --serif: "Fraunces Variable", Fraunces, Georgia, serif;
+  --sans: "DM Sans Variable", "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: light;
 }
 html, body, #root, .app-shell, .main-shell, main { background: var(--paper) !important; color: var(--ink); }
@@ -25,7 +25,7 @@ body { background-image: none !important; }
 .brand > span:last-child { color: var(--ink) !important; } .brand-period { color: var(--blue) !important; }
 .lens-mark > span { border-color: var(--blue) !important; } .brand-caption { color: var(--muted) !important; }
 /* momentum brand mark: trail builds toward a solid lead + orange spark */
-.momentum-mark { width: 33px; height: 33px; flex: none; display: block; }
+.momentum-mark { width: 25px; height: 25px; flex: none; display: block; }
 .momentum-mark.small { width: 21px; height: 21px; }
 .momentum-trail-1 { fill: var(--blue); opacity: 0.22; }
 .momentum-trail-2 { fill: var(--blue); opacity: 0.42; }
@@ -108,7 +108,7 @@ body { background-image: none !important; }
 /* ---- typography system ---- */
 body, .app-shell, .app-shell :is(button, input, select, textarea) { font-family: var(--sans) !important; }
 .app-shell :is(h1, h2, h3, h4), .brand > span:last-child, .moment-invitation h2, .question-card h3 {
-  font-family: var(--serif) !important; font-weight: 800 !important; font-stretch: 120% !important; letter-spacing: -0.03em; font-style: normal !important; }
+  font-family: var(--serif) !important; font-weight: 650 !important; letter-spacing: -0.03em; font-style: normal !important; }
 .app-shell h1 em, .app-shell h2 em { font-style: normal !important; }
 .app-shell :is(.eyebrow, .task-label, .samples-label, .prepared-label, .week-badge, .coach-question-kicker, .invitation-eyebrow span, .message-source, .hud-eyebrow, .hud-value, .pin-head, .pin-time, .timeline-head) { font-family: var(--mono) !important; }
 /* lesson panel: text that was designed for the old dark-green surface */

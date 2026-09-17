@@ -60,12 +60,13 @@ export interface LearningRecord {
   id: string;
   momentId: string;
   title: string;
-  concept: Concept;
+  concept: Concept | string;
   answer: string;
   reflection: string;
   completedAt: string;
   hints: number;
   mode: string;
+  kind?: "event" | "course";
 }
 export const LEGACY_COURSE = {
   id: "PHYS 2010",

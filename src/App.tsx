@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MomentumMark } from "./Brand";
 import {
   ArrowDownToLine,
@@ -59,20 +59,19 @@ function readRecords(): LearningRecord[] {
           (r) =>
             r &&
             typeof r.id === "string" &&
-            ["force", "torque", "equilibrium", "projectile"].includes(
-              r.concept,
-            ) &&
+            typeof r.concept === "string" &&
             typeof r.reflection === "string" &&
             typeof r.title === "string" &&
-            typeof r.completedAt === "string",
+            typeof r.completedAt === "string" &&
+            (r.kind === "course" ||
+              ["force", "torque", "equilibrium", "projectile"].includes(
+                r.concept,
+              )),
         )
       : [];
   } catch {
     return [];
   }
-}
-function Pill({ children }: { children: ReactNode }) {
-  return <span className="pill">{children}</span>;
 }
 export default function App() {
   const [page, setPage] = useState<Page>("today"),
@@ -212,7 +211,7 @@ export default function App() {
     }
   }
   function exportNotebook() {
-    const text = `# My Momentum notebook\n\n${records.map((r) => `## ${r.title}\n${r.concept} · ${new Date(r.completedAt).toLocaleDateString()}\n\nAnswer: ${r.answer}\n\n${r.reflection}\n\nHints used: ${r.hints}. Tutor mode: ${r.mode}.\n`).join("\n")}`;
+    const text = `# My Momentum notebook\n\n${records.map((r) => `## ${r.title}\n${r.kind === "course" ? "Course" : r.concept} · ${new Date(r.completedAt).toLocaleDateString()}\n\n${r.kind === "course" ? "Transfer" : "Answer"}: ${r.answer}\n\n${r.reflection}\n\nHints used: ${r.hints}. Tutor mode: ${r.mode}.\n`).join("\n")}`;
     const url = URL.createObjectURL(
       new Blob([text], { type: "text/markdown" }),
     );
@@ -376,7 +375,6 @@ export default function App() {
             momentum<span className="brand-period">.</span>
           </span>
         </button>
-        <p className="brand-caption">A new way to see.</p>
         <nav aria-label="Main navigation">
           {navItems.map(({ id, label, icon: Icon }) => (
             <button
@@ -402,28 +400,6 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <div className="sidebar-course">
-          <span className="eyebrow">IN YOUR ORBIT</span>
-          <div className="mini-book">
-            <BookOpen size={19} />
-          </div>
-          <strong>Physics, connected.</strong>
-          <p>Projectile motion</p>
-          <button className="text-button" onClick={() => navigate("course")}>
-            Open this week <ArrowUpRight size={14} />
-          </button>
-          <div className="course-progress">
-            <span
-              style={{
-                width: `${Math.min(100, (new Set(records.map((r) => r.concept)).size / 1) * 100)}%`,
-              }}
-            />
-          </div>
-          <small>
-            {new Set(records.map((r) => r.concept)).size} of 1 connection
-            explored
-          </small>
-        </div>
         <div className="sidebar-bottom">
           <button
             onClick={() => setModal("settings")}
@@ -435,41 +411,13 @@ export default function App() {
             <span className="avatar">N</span>
             <div>
               <strong>Nam’s learning space</strong>
-              <small>Student · sample course</small>
+              <small>Student</small>
             </div>
             <span className="profile-dot" />
           </div>
         </div>
       </aside>
       <div className="main-shell">
-        <header className="topbar">
-          <div className="breadcrumb">
-            <span>{COURSE.id}</span>
-            <ChevronRight size={13} />
-            <span>Projectile motion</span>
-            <span className="week-badge">Week 04</span>
-          </div>
-          <div className="header-actions">
-            <button
-              className="connection-status"
-              onClick={() => setModal("settings")}
-            >
-              <span
-                className={`status-dot ${mode === "bedrock" ? "live" : ""}`}
-              />
-              {mode === "bedrock" ? "Bedrock connected" : "Demo mode"}
-            </button>
-            <button
-              className="present-button"
-              onClick={() => {
-                setPresentationStep(0);
-                setModal("present");
-              }}
-            >
-              <Play size={13} /> Present demo
-            </button>
-          </div>
-        </header>
         <main id="main-content" tabIndex={-1}>
           {page === "today" && (
             <div className="day-page page-enter">
@@ -861,102 +809,20 @@ export default function App() {
           )}
           {page === "course" && (
             <div className="course-page page-enter">
-              <div className="eyebrow">YOUR COURSE / WEEK 04</div>
+              <div className="eyebrow">YOUR COURSE</div>
               <h1>
-                A little theory.
-                <br />
-                <em>A world of possibilities.</em>
+                Start with <em>what you need now.</em>
               </h1>
               <p className="page-intro">
-                Map your material, check your starting point, then practice with your recording.
+                Momentum maps your course PDF, checks your starting point, and
+                gives you one clear next lesson.
               </p>
-              <div className="course-banner">
-                <div className="course-book">
-                  <BookOpen size={42} strokeWidth={1} />
-                </div>
-                <div>
-                  <Pill>Sample course</Pill>
-                  <h2>{COURSE.title}</h2>
-                  <p>
-                    {COURSE.id} · {COURSE.instructor}
-                  </p>
-                </div>
-                <span className="course-week">04</span>
-              </div>
               <CourseDiagnostic
                 bedrockAvailable={Boolean(status?.configured)}
                 onOpenSettings={() => setModal("settings")}
-                onStartLesson={() => {
-                  if (!isDemo) useDemo();
-                  setSelected("shot");
-                  navigate("investigate");
-                }}
+                onSave={saveRecord}
+                onOpenNotebook={() => navigate("moments")}
               />
-              <div className="course-content">
-                <section>
-                  <div className="section-heading">
-                    <h2>Your lecture notes</h2>
-                    <span>CURATED FOR THIS DEMO</span>
-                  </div>
-                  {COURSE.notes.map((note, i) => (
-                    <article className="lecture-note" key={note.id}>
-                      <span className="lecture-number">{note.id}</span>
-                      <div>
-                        <h3>{note.title}</h3>
-                        <p>{note.body}</p>
-                        <div className="lecture-equation">
-                          {
-                            [
-                              "aₓ = 0     aᵧ = −g",
-                              "At the apex: vᵧ = 0, aᵧ = −g",
-                              "x = v₀ cos θ · t",
-                            ][i]
-                          }
-                        </div>
-                        <button
-                          className="text-button"
-                          onClick={() => {
-                            if (!isDemo) {
-                              useDemo();
-                              setSelected(DEMO_MOMENTS[0].id);
-                              navigate("investigate");
-                            } else
-                              investigate(
-                                moments.find(
-                                  (m) => m.concept === DEMO_MOMENTS[0].concept,
-                                ) || DEMO_MOMENTS[0],
-                              );
-                          }}
-                        >
-                          See it in an everyday moment{" "}
-                          <ArrowUpRight size={15} />
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </section>
-                <aside className="objectives">
-                  <span className="eyebrow">WHAT YOU’RE WORKING TOWARD</span>
-                  <h2>
-                    From remembering
-                    <br />
-                    to reasoning.
-                  </h2>
-                  {COURSE.objectives.map((objective, i) => (
-                    <div key={objective}>
-                      <span>0{i + 1}</span>
-                      <p>{objective}</p>
-                    </div>
-                  ))}
-                  <div className="objective-note">
-                    <CircleHelp size={18} />
-                    <p>
-                      These are learning goals, not inferred mastery scores.
-                      Your notebook keeps the explanations you actually write.
-                    </p>
-                  </div>
-                </aside>
-              </div>
             </div>
           )}
           {page === "moments" && (
@@ -1020,7 +886,7 @@ export default function App() {
                       </span>
                       <div>
                         <div className="eyebrow">
-                          {r.concept} ·{" "}
+                          {r.kind === "course" ? "Your course" : r.concept} ·{" "}
                           {new Date(r.completedAt).toLocaleDateString(
                             undefined,
                             { month: "short", day: "numeric" },
@@ -1030,13 +896,20 @@ export default function App() {
                         <blockquote>“{r.reflection}”</blockquote>
                         <div className="entry-details">
                           <span>
-                            <Check size={13} /> Practice answer: {r.answer}
-                            {r.concept !== "force" && r.concept !== "projectile"
-                              ? " N"
-                              : ""}
+                            <Check size={13} />{" "}
+                            {r.kind === "course"
+                              ? `Transfer check: ${r.answer}`
+                              : `Practice answer: ${r.answer}${
+                                  r.concept !== "force" &&
+                                  r.concept !== "projectile"
+                                    ? " N"
+                                    : ""
+                                }`}
                           </span>
                           <span>
-                            {r.hints} {r.hints === 1 ? "hint" : "hints"} used
+                            {r.kind === "course"
+                              ? `${r.hints} ${r.hints === 1 ? "idea" : "ideas"} coached`
+                              : `${r.hints} ${r.hints === 1 ? "hint" : "hints"} used`}
                           </span>
                           <span>
                             {r.mode === "bedrock"
@@ -1047,6 +920,10 @@ export default function App() {
                         <button
                           className="text-button"
                           onClick={() => {
+                            if (r.kind === "course") {
+                              navigate("course");
+                              return;
+                            }
                             const m = moments.find((m) => m.id === r.id);
                             if (m) investigate(m);
                             else {
@@ -1054,13 +931,16 @@ export default function App() {
                               setSelected(
                                 DEMO_MOMENTS.find(
                                   (d) => d.concept === r.concept,
-                                )!.id,
+                                )?.id || "shot",
                               );
                               navigate("investigate");
                             }
                           }}
                         >
-                          Revisit the model <ArrowUpRight size={14} />
+                          {r.kind === "course"
+                            ? "Back to my course"
+                            : "Revisit the model"}{" "}
+                          <ArrowUpRight size={14} />
                         </button>
                       </div>
                       <button
