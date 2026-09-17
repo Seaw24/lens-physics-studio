@@ -575,7 +575,7 @@ export default function CourseDiagnostic({
                 <span className="material-upload-icon">
                   <Sparkles size={28} />
                 </span>
-                <strong>Connect Bedrock for PDF analysis</strong>
+                <strong>Upload your notes to get started</strong>
                 <span>Open Studio settings to connect the AI model</span>
               </button>
             )}
