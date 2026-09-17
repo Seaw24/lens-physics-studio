@@ -21,6 +21,7 @@ import {
   Play,
   Plus,
   RotateCcw,
+  ScanSearch,
   Settings2,
   ShieldCheck,
   Sparkles,
@@ -47,8 +48,17 @@ import Guide from "./Guide";
 import VideoPlayer from "./VideoPlayer";
 import Landing from "./Landing";
 import { BasketballArt } from "./Projectile";
+import DiscoveryWorkspace from "./discovery/DiscoveryWorkspace";
+import YourDay from "./studio/YourDay";
 
-type Page = "today" | "course" | "moments" | "review" | "investigate" | "guide";
+type Page =
+  | "today"
+  | "discovery"
+  | "course"
+  | "moments"
+  | "review"
+  | "investigate"
+  | "guide";
 type Modal = "settings" | "present" | "upload" | null;
 const notebookKey = "lens-notebook-v1";
 function readRecords(): LearningRecord[] {
@@ -72,6 +82,34 @@ function readRecords(): LearningRecord[] {
   } catch {
     return [];
   }
+}
+/** Keeps a page mounted but hidden while another page is shown. */
+function KeepAlive({
+  active,
+  mounted,
+  children,
+}: {
+  active: boolean;
+  mounted: boolean;
+  children: ReactNode;
+}) {
+  const slot = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (active) return;
+    // Pause clips on hidden pages; live camera streams keep capturing.
+    slot.current
+      ?.querySelectorAll("video")
+      .forEach((video) => !video.srcObject && video.pause());
+  }, [active]);
+  if (!mounted) return null;
+  return (
+    <div ref={slot} className="page-slot" hidden={!active}>
+      {children}
+    </div>
+  );
+}
+function Pill({ children }: { children: ReactNode }) {
+  return <span className="pill">{children}</span>;
 }
 export default function App() {
   const [page, setPage] = useState<Page>("today"),
@@ -107,6 +145,9 @@ export default function App() {
     seen = useRef(new Set<string>()),
     modalRef = useRef<HTMLDivElement>(null),
     lastFocus = useRef<HTMLElement | null>(null);
+  // Pages stay mounted after their first visit so in-progress work survives navigation.
+  const visited = useRef(new Set<Page>());
+  visited.current.add(page);
   const moment = moments.find((m) => m.id === selected) || moments[0];
   async function refreshStatus() {
     try {
@@ -341,13 +382,14 @@ export default function App() {
   );
   const navItems = [
     { id: "today", label: "Your day", icon: Eye },
+    { id: "discovery", label: "Discovery", icon: ScanSearch },
     { id: "course", label: "Your course", icon: BookOpen },
     { id: "moments", label: "Notebook", icon: Bookmark },
     { id: "review", label: "Practice & recall", icon: Layers3 },
     { id: "guide", label: "Guide & about", icon: CircleHelp },
   ] as const;
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${page === "today" ? "studio-mode" : ""}`}>
       {landing && (
         <Landing
           onEnter={() => setLanding(false)}
@@ -419,395 +461,46 @@ export default function App() {
       </aside>
       <div className="main-shell">
         <main id="main-content" tabIndex={-1}>
-          {page === "today" && (
-            <div className="day-page page-enter">
-              <div className="page-heading">
-                <div>
-                  <h1>
-                    Any recording.
-                    <br />
-                    <em>The physics inside it.</em>
-                  </h1>
-                  <p>
-                    A door, a swing, a bike, a ball — drop in a clip of anything.
-                    Momentum finds the physics in it and turns it into a short
-                    lesson:{" "}
-                    <span className="how-steps">
-                      <b>predict</b> · <b>test</b> · <b>explain</b>
-                    </span>
-                  </p>
-                </div>
-              </div>
-              <div className="intake">
-                <button
-                  className="dropzone"
-                  onClick={() => fileInput.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    openFile(e.dataTransfer.files?.[0]);
-                  }}
-                >
-                  <span className="dropzone-icon">
-                    <Upload size={26} strokeWidth={1.5} />
-                  </span>
-                  <strong>Drop a recording here</strong>
-                  <span>
-                    or browse · MP4, WebM, MOV · the full video stays on your
-                    device
-                  </span>
-                </button>
-                <div className="samples">
-                  <span className="samples-label">Or try a sample</span>
-                  <button
-                    className={`sample-tile ${isDemo ? "active" : ""}`}
-                    onClick={useDemo}
-                  >
-                    <img src="/demo/shot-poster.jpg" alt="" />
-                    <span>
-                      <strong>Basketball shot</strong>
-                      <small>projectile motion · 49 s</small>
-                    </span>
-                  </button>
-                </div>
-              </div>
-              <div className="daily-layout">
-                <section className="day-recording">
-                  <div className="section-topline">
-                    <div>
-                      <span className="record-dot" />
-                      <strong>{fileName}</strong>
-                      <span className="quiet-label">
-                        {isDemo
-                          ? "Sample recording · 49 s"
-                          : "Your recording"}
-                      </span>
-                    </div>
-                    <span className="source-tag">
-                      {isDemo ? "Sample" : "Analyzed by Momentum"}
-                    </span>
-                  </div>
-                  <VideoPlayer
-                    src={src}
-                    moments={moments}
-                    seek={seek}
-                    rate={rate}
-                    onRateChange={setRate}
-                    autoPlay={autoPlay}
-                    onTime={onTime}
-                    onEnded={() => {
-                      setAutoPlay(false);
-                      setDiscovery(false);
-                    }}
-                  />
-                  <div className="recording-caption">
-                    <span>
-                      <ShieldCheck size={14} />
-                      {isDemo
-                        ? "Real footage. Guided physics questions."
-                        : "Your full recording stays in this browser."}
-                    </span>
-                    <button
-                      className="text-button"
-                      onClick={
-                        isDemo ? replayDiscovery : () => setModal("upload")
-                      }
-                    >
-                      {isDemo ? "Replay discovery" : "Analyze recording"}{" "}
-                      <ArrowUpRight size={13} />
-                    </button>
-                  </div>
-                  {discovery && (
-                    <div className="discovery-bar">
-                      <span className="pulse-dot" />
-                      <div>
-                        <strong>Discovery replay</strong>
-                        <small>
-                          Curated events · normal playback · invitations after
-                          each event
-                        </small>
-                      </div>
-                      <button
-                        className={`availability-button ${available ? "available" : ""}`}
-                        onClick={() => setAvailable(!available)}
-                      >
-                        {available ? "I’m available" : "I’m busy"}
-                        <span />
-                      </button>
-                    </div>
-                  )}
-                  {deferred.length > 0 && (
-                    <div className="deferred-note">
-                      <Clock3 size={15} />
-                      {deferred.length}{" "}
-                      {deferred.length === 1 ? "question is" : "questions are"}{" "}
-                      waiting for your next break.
-                      <button
-                        className="text-button"
-                        onClick={() => {
-                          const next = moments.find(
-                            (m) => m.id === deferred[0],
-                          );
-                          if (next) {
-                            setInvitation(next);
-                            setSelected(next.id);
-                          }
-                          setDeferred((prev) => prev.slice(1));
-                          setAvailable(true);
-                        }}
-                      >
-                        I have a moment <ArrowRight size={13} />
-                      </button>
-                    </div>
-                  )}
-                  <div className="moments-section">
-                    <div className="section-heading">
-                      <h2>Events</h2>
-                      <span>
-                        {isDemo ? "Demo clip" : "Your recording"}
-                      </span>
-                    </div>
-                    <div className="moment-list">
-                      {moments.map((m, i) => (
-                        <button
-                          className={`moment-row ${selected === m.id ? "selected" : ""}`}
-                          key={m.id}
-                          onClick={() => selectMoment(m)}
-                        >
-                          <span className="moment-number">0{i + 1}</span>
-                          <span className="moment-thumbnail">
-                            {isDemo ? (
-                              <img src="/demo/shot-poster.jpg" alt="" />
-                            ) : (
-                              <Film size={22} />
-                            )}
-                          </span>
-                          <span className="moment-row-copy">
-                            <strong>{m.shortTitle}</strong>
-                            <small>
-                              {m.context.split(" · ")[0]} <span>·</span>{" "}
-                              {m.concept === "projectile"
-                                ? "Projectile motion"
-                                : m.concept === "force"
-                                  ? "Net force"
-                                  : m.concept === "torque"
-                                    ? "Torque"
-                                    : "Equilibrium"}
-                            </small>
-                          </span>
-                          <span className="moment-timestamp">
-                            {formatTime(m.time)}
-                          </span>
-                          {records.some((r) => r.id === m.id) ? (
-                            <Check size={16} />
-                          ) : (
-                            <ArrowUpRight size={17} />
-                          )}
-                        </button>
-                      ))}
-                      {!moments.length && (
-                        <div className="empty-moments">
-                          <Film size={22} />
-                          <p>
-                            {stage === "done"
-                              ? "No supported opportunities found. Try a clearer scene with a door, lever, or visible change in motion."
-                              : "Your recording is ready. Analyze sampled frames to discover course connections."}
-                          </p>
-                          <button
-                            className="text-button"
-                            onClick={() => setModal("upload")}
-                          >
-                            Review analysis options <ArrowRight size={14} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </section>
-                <aside className="day-rail">
-                  {moment ? (
-                    <>
-                      <div
-                        className={`moment-invitation ${invitation ? "just-noticed" : ""}`}
-                      >
-                        <div className="invitation-eyebrow">
-                          <MomentumMark small />
-                          <span>
-                            {invitation ? "Ready to explore" : "Projectile motion"}
-                          </span>
-                        </div>
-                        <h2>
-                          {moment.source === "bedrock"
-                            ? moment.title
-                            : moment.concept === "projectile"
-                              ? "At the highest point, does gravity take a break?"
-                            : moment.concept === "torque"
-                              ? "Why is the handle so far from the hinge?"
-                              : moment.concept === "force"
-                                ? "Moving right. But which way is the force?"
-                                : "Could a smaller force do just as much?"}
-                        </h2>
-                        <p>{moment.subtitle}</p>
-                        <div className="invitation-sketch" aria-hidden="true">
-                          {moment.concept === "projectile" ? (
-                            <BasketballArt />
-                          ) : moment.concept === "torque" ? (
-                            <svg viewBox="0 0 250 126">
-                              <path
-                                d="M38 18L194 34V105L38 88Z"
-                                fill="#5a765233"
-                                stroke="#b6c799"
-                                strokeWidth="1.4"
-                              />
-                              <path
-                                d="M38 18V88"
-                                stroke="#d9e4bc"
-                                strokeWidth="4"
-                              />
-                              <circle cx="38" cy="89" r="5" fill="#e2e9b9" />
-                              <path
-                                d="M173 48V82"
-                                stroke="#dfdfb0"
-                                strokeWidth="3"
-                              />
-                              <path
-                                d="M139 63H207M200 57L207 63L200 69"
-                                stroke="#dae3ad"
-                                fill="none"
-                              />
-                              <path
-                                d="M47 100Q97 122 145 108"
-                                fill="none"
-                                stroke="#a6bd87"
-                                strokeDasharray="3 4"
-                              />
-                              <text x="37" y="120" fill="#bfcda9" fontSize="10">
-                                pivot
-                              </text>
-                            </svg>
-                          ) : (
-                            <svg viewBox="0 0 250 126">
-                              <line
-                                x1="25"
-                                y1="95"
-                                x2="224"
-                                y2="95"
-                                stroke="#75915f"
-                              />
-                              <rect
-                                x="86"
-                                y="39"
-                                width="72"
-                                height="37"
-                                rx="6"
-                                fill="#6c875d"
-                              />
-                              <circle cx="101" cy="83" r="9" fill="#c8d6a8" />
-                              <circle cx="145" cy="83" r="9" fill="#c8d6a8" />
-                              <path
-                                d="M117 23H185M179 17L186 23L179 29"
-                                stroke="#d8dfaa"
-                                fill="none"
-                              />
-                              <path
-                                d="M100 58H44M51 51L44 58L51 65"
-                                stroke="#d8dfaa"
-                                fill="none"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                        <button
-                          className="button pale"
-                          onClick={() => investigate(moment)}
-                        >
-                          Explore this event <ArrowRight size={17} />
-                        </button>
-                        <button
-                          className="save-later"
-                          onClick={() => {
-                            setDeferred((prev) =>
-                              prev.includes(moment.id)
-                                ? prev
-                                : [...prev, moment.id],
-                            );
-                            setInvitation(null);
-                            setToast("Saved for your next break.");
-                          }}
-                        >
-                          <Clock3 size={13} /> Save for a quieter moment
-                        </button>
-                      </div>
-                      <div className="course-connection">
-                        <span className="eyebrow">RIGHT ON TIME FOR CLASS</span>
-                        <div>
-                          <BookOpen size={21} />
-                          <h3>
-                            {moment.concept === "projectile"
-                              ? "Gravity throughout free flight"
-                              : moment.concept === "force"
-                                ? "Newton’s second law"
-                                : moment.concept === "torque"
-                                  ? "The turning effect of a force"
-                                  : "When forces find balance"}
-                          </h3>
-                        </div>
-                        <p>{moment.principle}</p>
-                        <button
-                          className="text-button"
-                          onClick={() => navigate("course")}
-                        >
-                          See your lecture notes <ArrowUpRight size={14} />
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="moment-invitation">
-                      <MomentumMark small />
-                      <h2>No events yet</h2>
-                      <p>
-                        Add a recording, then connect it to this week’s physics.
-                      </p>
-                      <button
-                        className="button pale"
-                        onClick={() => setModal("upload")}
-                      >
-                        Find a connection <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  )}
-                  <div className="quiet-promise">
-                    <Leaf size={18} />
-                    <p>
-                      A little curiosity.
-                      <br />
-                      At your own pace.
-                    </p>
-                  </div>
-                </aside>
-              </div>
-            </div>
-          )}
-          {page === "investigate" && moment && (
-            <Investigation
-              key={moment.id}
-              moment={moment}
-              src={src}
-              mode={mode}
-              onBack={() => navigate("today")}
-              onSave={saveRecord}
-              onCourse={() => navigate("course")}
-              onGuide={() => navigate("guide")}
-              alreadySaved={records.some((r) => r.id === moment.id)}
-              onUpdate={(updated) =>
-                setMoments((prev) =>
-                  prev.map((m) => (m.id === updated.id ? updated : m)),
-                )
-              }
-              onNext={() => navigate("review")}
-            />
-          )}
-          {page === "course" && (
+          <KeepAlive
+            active={page === "discovery"}
+            mounted={visited.current.has("discovery")}
+          >
+            <DiscoveryWorkspace />
+          </KeepAlive>
+          <KeepAlive
+            active={page === "today"}
+            mounted={visited.current.has("today")}
+          >
+            <YourDay onOpenDiscovery={() => navigate("discovery")} />
+          </KeepAlive>
+          <KeepAlive
+            active={page === "investigate"}
+            mounted={visited.current.has("investigate")}
+          >
+            {moment && (
+              <Investigation
+                key={moment.id}
+                moment={moment}
+                src={src}
+                mode={mode}
+                onBack={() => navigate("today")}
+                onSave={saveRecord}
+                onCourse={() => navigate("course")}
+                onGuide={() => navigate("guide")}
+                alreadySaved={records.some((r) => r.id === moment.id)}
+                onUpdate={(updated) =>
+                  setMoments((prev) =>
+                    prev.map((m) => (m.id === updated.id ? updated : m)),
+                  )
+                }
+                onNext={() => navigate("review")}
+              />
+            )}
+          </KeepAlive>
+          <KeepAlive
+            active={page === "course"}
+            mounted={visited.current.has("course")}
+          >
             <div className="course-page page-enter">
               <div className="eyebrow">YOUR COURSE</div>
               <h1>
@@ -824,8 +517,11 @@ export default function App() {
                 onOpenNotebook={() => navigate("moments")}
               />
             </div>
-          )}
-          {page === "moments" && (
+          </KeepAlive>
+          <KeepAlive
+            active={page === "moments"}
+            mounted={visited.current.has("moments")}
+          >
             <div className="notebook-page page-enter">
               <div className="page-heading">
                 <div>
@@ -961,11 +657,17 @@ export default function App() {
                 </>
               )}
             </div>
-          )}
-          {page === "review" && (
+          </KeepAlive>
+          <KeepAlive
+            active={page === "review"}
+            mounted={visited.current.has("review")}
+          >
             <Review records={records} onExplore={() => navigate("today")} />
-          )}
-          {page === "guide" && (
+          </KeepAlive>
+          <KeepAlive
+            active={page === "guide"}
+            mounted={visited.current.has("guide")}
+          >
             <Guide
               mode={mode}
               onCourse={() => navigate("course")}
@@ -975,7 +677,7 @@ export default function App() {
                 navigate("investigate");
               }}
             />
-          )}
+          </KeepAlive>
         </main>
       </div>
       <input

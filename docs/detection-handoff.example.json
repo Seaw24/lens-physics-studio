@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0",
+  "exampleOnly": true,
+  "eventId": "example_event_001",
+  "sessionId": "example_session_001",
+  "inputMode": "live_phone",
+  "media": {
+    "kind": "video",
+    "assetId": "example_asset_001",
+    "url": "/api/discovery/assets/example_asset_001",
+    "mimeType": "video/mp4",
+    "sourceTimebase": "session_media_seconds",
+    "sourceStartSeconds": 5.0,
+    "sourceEndSeconds": 12.0,
+    "clipDurationSeconds": 7.0,
+    "eventStartInClipSeconds": 2.0,
+    "eventEndInClipSeconds": 4.8
+  },
+  "course": {
+    "moduleId": "intro-mechanics-forces-torque",
+    "relevantObjectives": [
+      "Explain how force direction and moment arm affect torque about a pivot."
+    ]
+  },
+  "detections": [
+    {
+      "kind": "action",
+      "modelVersion": "EXAMPLE-action-model-version",
+      "label": "opening_hinged_door",
+      "rawScore": 0.84,
+      "scoreMeaning": "Synthetic uncalibrated classifier score for this contract example only.",
+      "startInClipSeconds": 2.0,
+      "endInClipSeconds": 4.8,
+      "observation": "Possible opening of a hinged cupboard door."
+    },
+    {
+      "kind": "explorer",
+      "modelVersion": "EXAMPLE-vision-model-version",
+      "promptVersion": "EXAMPLE-explorer-v1",
+      "label": "door_rotation",
+      "rawScore": null,
+      "scoreMeaning": "No calibrated numeric score supplied.",
+      "startInClipSeconds": 2.2,
+      "endInClipSeconds": 4.6,
+      "observation": "A hand appears to pull a handle while a cupboard door rotates."
+    }
+  ],
+  "fusion": {
+    "support": "both_detectors",
+    "reason": "The proposals overlap in time and describe the same apparent door interaction."
+  },
+  "review": {
+    "verdict": "teachable",
+    "opportunityKind": "observed_action",
+    "modelVersion": "EXAMPLE-review-model-version",
+    "promptVersion": "EXAMPLE-teachability-v1",
+    "concepts": ["torque", "moment_arm"],
+    "observation": "Example only: a hand pulls a cupboard handle and the door rotates about its hinge side.",
+    "evidence": [
+      {
+        "timeInClipSeconds": 2.4,
+        "statement": "Example only: the hand contacts the handle and the hinge side is visible."
+      },
+      {
+        "timeInClipSeconds": 4.2,
+        "statement": "Example only: the door is visibly farther open."
+      }
+    ],
+    "reason": "The visible hinge and contact point could support a conceptual comparison of moment arms.",
+    "limitations": [
+      "This entire record is a synthetic interface example, not an analysis of a real clip.",
+      "Force magnitude, physical distances, and torque have not been measured.",
+      "A teachability verdict does not itself generate or validate a finished lesson."
+    ]
+  }
+}

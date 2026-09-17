@@ -1,0 +1,20 @@
+{
+  "exampleOnly": true,
+  "videoSourceStartMs": 5000,
+  "frames": [
+    {
+      "frameId": "f_020",
+      "sourceTimeMs": 7200
+    },
+    {
+      "frameId": "f_036",
+      "sourceTimeMs": 9200
+    }
+  ],
+  "imageFrames": [
+    {
+      "frameId": "image_f0",
+      "sourceTimeMs": null
+    }
+  ]
+}

@@ -3,10 +3,9 @@ import { createCanvas } from "@napi-rs/canvas";
 import express from "express";
 import path from "node:path";
 import fs from "node:fs";
-import {
-  BedrockRuntimeClient,
-  ConverseCommand,
-} from "@aws-sdk/client-bedrock-runtime";
+import https from "node:https";
+import http from "node:http";
+import { randomUUID } from "node:crypto";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { z } from "zod";
 import { COURSE, rehearsalReply } from "../shared/physics";
@@ -27,6 +26,12 @@ import {
   type DiagnosticQuestion,
   type MissedAttempt,
 } from "../shared/diagnostic";
+import { loadDiscoveryConfig } from "./discovery/config";
+import { DiscoveryService } from "./discovery/service";
+import { createDiscoveryRouter } from "./discovery/router";
+import { bedrockText } from "./bedrock";
+import { StudioService } from "./studio/service";
+import { createStudioRouter } from "./studio/router";
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
@@ -37,25 +42,38 @@ const configured =
   Boolean(
     process.env.AWS_ACCESS_KEY_ID ||
     process.env.AWS_PROFILE ||
+    process.env.DISCOVERY_CREDENTIALS_FILE ||
     process.env.AWS_BEARER_TOKEN_BEDROCK ||
     process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI ||
     process.env.AWS_CONTAINER_CREDENTIALS_FULL_URI ||
     process.env.AWS_WEB_IDENTITY_TOKEN_FILE,
   );
-const client = new BedrockRuntimeClient({ region, maxAttempts: 2 });
 const maxRenderedPdfBytes = 18 * 1024 * 1024;
 const maxRenderedPageBytes = 3.5 * 1024 * 1024;
 const maxRenderedPdfPages = 10;
+const discoveryConfig = loadDiscoveryConfig();
+const discoveryService = await DiscoveryService.create(discoveryConfig);
 app.disable("x-powered-by");
+// The studio shares Discovery's controller cookie, which is scoped to /api/discovery.
+const studioService = new StudioService(discoveryService);
+app.use("/api/discovery/studio", createStudioRouter(studioService));
+studioService.start();
+app.use("/api/discovery", createDiscoveryRouter(discoveryService));
 app.use(express.json({ limit: "24mb" }));
 app.use("/api", (req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   const origin = req.get("origin");
-  if (
-    origin &&
-    new URL(origin).host !== req.get("host") &&
-    !/^http:\/\/(localhost|127\.0\.0\.1):5173$/.test(origin)
-  ) {
+  let denied = false;
+  if (origin) {
+    try {
+      denied =
+        new URL(origin).host !== req.get("host") &&
+        !/^http:\/\/(localhost|127\.0\.0\.1):5173$/.test(origin);
+    } catch {
+      denied = true;
+    }
+  }
+  if (denied) {
     res.status(403).json({
       error: "This local prototype accepts requests from its own interface.",
     });
@@ -96,31 +114,6 @@ function publicError(error: unknown) {
   return "The AI request could not finish. Try again or switch to rehearsal.";
 }
 async function converse(input: Record<string, unknown>, timeoutMs = 45000) {
-  if (process.env.AWS_BEARER_TOKEN_BEDROCK) {
-    const response = await fetch(
-      `https://bedrock-runtime.${region}.amazonaws.com/model/${encodeURIComponent(modelId)}/converse`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.AWS_BEARER_TOKEN_BEDROCK}`,
-        },
-        body: JSON.stringify(input),
-        signal: AbortSignal.timeout(timeoutMs),
-      },
-    );
-    if (!response.ok) {
-      const e = new Error("Bedrock request failed");
-      e.name =
-        response.status === 401 || response.status === 403
-          ? "AccessDenied"
-          : response.status === 429
-            ? "Throttling"
-            : "ServiceError";
-      throw e;
-    }
-    return await response.json();
-  }
   const request = structuredClone(input) as any;
   for (const m of request.messages || [])
     for (const c of m.content || [])
@@ -131,15 +124,52 @@ async function converse(input: Record<string, unknown>, timeoutMs = 45000) {
           c.document.source.bytes,
           "base64",
         );
-  return await client.send(new ConverseCommand({ modelId, ...request }), {
-    abortSignal: AbortSignal.timeout(timeoutMs),
-  });
+  const attemptId = randomUUID();
+  const startedAt = new Date().toISOString();
+  const base = {
+    attemptId,
+    sessionId: null,
+    generation: null,
+    stage: "legacy" as const,
+    modelId,
+    promptHash: null,
+    snapshotHash: null,
+    reason: "legacy_application_request",
+    startedAt,
+  };
+  await discoveryService.store.appendLedger(base);
+  const start = Date.now();
+  try {
+    const result = await discoveryService.dispatcher.run("legacy", () =>
+      discoveryService.transport.converse(modelId, request, timeoutMs),
+    );
+    const usage = (result as any).usage;
+    await discoveryService.store.appendLedger({
+      ...base,
+      endedAt: new Date().toISOString(),
+      result: "completed",
+      stopReason: (result as any).stopReason || null,
+      inputTokens: usage?.inputTokens ?? null,
+      outputTokens: usage?.outputTokens ?? null,
+      latencyMs: Date.now() - start,
+      errorCategory: null,
+    });
+    return result;
+  } catch (error) {
+    await discoveryService.store.appendLedger({
+      ...base,
+      endedAt: new Date().toISOString(),
+      result: "failed",
+      inputTokens: null,
+      outputTokens: null,
+      latencyMs: Date.now() - start,
+      errorCategory: error instanceof Error ? error.name : "UnknownError",
+    });
+    throw error;
+  }
 }
 function outputText(result: any) {
-  return (result.output?.message?.content || [])
-    .filter((c: any) => typeof c.text === "string")
-    .map((c: any) => c.text)
-    .join("\n");
+  return bedrockText(result);
 }
 function needsPdfImageFallback() {
   // Claude Opus 4.6 accepts image blocks but not Bedrock document blocks.
@@ -673,10 +703,7 @@ app.post("/api/analyze-course", async (req, res) => {
       });
       return;
     }
-    console.warn(
-      "Course PDF analysis failed",
-      safeCourseErrorDetails(error),
-    );
+    console.warn("Course PDF analysis failed", safeCourseErrorDetails(error));
     const failure = classifyCourseError(error);
     res.status(failure.status).json({
       error: failure.message,
@@ -834,8 +861,29 @@ app.use(
     });
   },
 );
-app.listen(port, "127.0.0.1", () =>
+const listener = discoveryConfig.tlsCert
+  ? https.createServer(
+      {
+        cert: fs.readFileSync(discoveryConfig.tlsCert),
+        key: fs.readFileSync(discoveryConfig.tlsKey!),
+      },
+      app,
+    )
+  : http.createServer(app);
+listener.listen(port, discoveryConfig.bindHost, () =>
   console.log(
-    `Momentum API: http://127.0.0.1:${port} · ${configured ? "Bedrock configured" : "rehearsal mode"}`,
+    `Momentum API: ${discoveryConfig.tlsCert ? "https" : "http"}://${discoveryConfig.bindHost}:${port} · ${configured ? "Bedrock configured" : "rehearsal mode"}`,
   ),
 );
+if (discoveryConfig.accessCodeGenerated)
+  console.log(
+    `Discovery access code (generated for this run): ${discoveryConfig.accessCode}`,
+  );
+const shutdown = () => {
+  studioService.close();
+  listener.close(() => {
+    void discoveryService.close().finally(() => process.exit(0));
+  });
+};
+process.once("SIGINT", shutdown);
+process.once("SIGTERM", shutdown);

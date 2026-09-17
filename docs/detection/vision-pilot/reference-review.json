@@ -1,0 +1,123 @@
+{
+  "status": "assistant-reviewed pilot, not independent ground truth",
+  "items": [
+    {
+      "id": "dev-1",
+      "sourceId": "clip-1",
+      "userRangeSeconds": [
+        4,
+        8
+      ],
+      "reference": "Moving the can",
+      "candidateAssessment": "found",
+      "evidenceCandidates": [
+        "clip-1-001-o0"
+      ],
+      "notes": "Contact and movement found. Some other rows overinterpret a fixed base pivot or lift."
+    },
+    {
+      "id": "dev-2",
+      "sourceId": "clip-1",
+      "userRangeSeconds": [
+        10,
+        15
+      ],
+      "reference": "Manipulating the can pull tab",
+      "candidateAssessment": "found_with_grounding_errors",
+      "evidenceCandidates": [
+        "clip-1-003-o0"
+      ],
+      "notes": "The tab interaction was found; other windows incorrectly described puncturing/opening an already-open can. Do not approve those claims."
+    },
+    {
+      "id": "test-1",
+      "sourceId": "clip-2",
+      "userRangeSeconds": [
+        3,
+        5
+      ],
+      "reference": "First table push",
+      "candidateAssessment": "partial",
+      "evidenceCandidates": [
+        "clip-2-000-o1",
+        "clip-2-001-o1"
+      ],
+      "notes": "Hand/table-edge contact found, but motion is not reliably established and an adjacent window misidentifies the tabletop as a board/tray."
+    },
+    {
+      "id": "test-2",
+      "sourceId": "clip-2",
+      "userRangeSeconds": [
+        24,
+        26
+      ],
+      "reference": "First door-handle turn",
+      "candidateAssessment": "found",
+      "evidenceCandidates": [
+        "clip-2-008-o0"
+      ],
+      "notes": "Handle rotation found at 25.0\u201325.5 s. An approximate angle in the model output is not a verified measurement."
+    },
+    {
+      "id": "test-3",
+      "sourceId": "clip-2",
+      "userRangeSeconds": [
+        33,
+        36
+      ],
+      "reference": "Second door-handle turn",
+      "candidateAssessment": "found",
+      "evidenceCandidates": [
+        "clip-2-010-o0",
+        "clip-2-011-o0"
+      ],
+      "notes": "Handle rotation found at 33.0\u201335.0 s; overlapping windows produce duplicate candidates."
+    },
+    {
+      "id": "test-4",
+      "sourceId": "clip-2",
+      "userRangeSeconds": [
+        43,
+        46
+      ],
+      "reference": "Third door-handle turn",
+      "candidateAssessment": "found",
+      "evidenceCandidates": [
+        "clip-2-013-o0",
+        "clip-2-015-o0"
+      ],
+      "notes": "Found around 42.5\u201344.5 and 45.0\u201345.5 s. Window 014 failed evidence-boundary validation and is excluded."
+    },
+    {
+      "id": "test-5",
+      "sourceId": "clip-2",
+      "userRangeSeconds": [
+        60,
+        61
+      ],
+      "reference": "Second table push",
+      "candidateAssessment": "partial",
+      "evidenceCandidates": [
+        "clip-2-019-o1",
+        "clip-2-020-o1"
+      ],
+      "notes": "Contact near the table edge found around 60.5\u201363.5 s; one output wrongly places the hand on the floor/leg. Table motion and push direction remain unverified."
+    },
+    {
+      "id": "test-6",
+      "sourceId": "clip-2",
+      "userRangeSeconds": [
+        68,
+        79.78
+      ],
+      "reference": "Paper-plate throws",
+      "candidateAssessment": "found_with_grounding_errors",
+      "evidenceCandidates": [
+        "clip-2-022-o0",
+        "clip-2-024-o0",
+        "clip-2-025-o1"
+      ],
+      "notes": "Airborne plate and later release detected. Source frames at 69.0 and 77.5 s show an airborne plate. Claims of a wet floor are unsupported; do not infer measured trajectories."
+    }
+  ]
+}

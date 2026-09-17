@@ -1,0 +1,12 @@
+{
+  "verdict": "not_teachable",
+  "opportunityKind": "scene_context",
+  "objectiveIds": [],
+  "concepts": [],
+  "observation": "Synthetic evaluation fixture.",
+  "evidence": [],
+  "reason": "The visible blank scene offers no supported connection to the supplied mechanics objectives.",
+  "limitations": [
+    "Synthetic fixture; not a measured model decision."
+  ]
+}
