@@ -9,7 +9,6 @@ import {
   RotateCcw,
   Bookmark,
   ArrowUpRight,
-  MessageCircle,
   LoaderCircle,
   Eye,
   FlaskConical,
@@ -173,7 +172,7 @@ export default function Investigation({
   return (
     <section className="investigation page-enter">
       <button className="text-button back-button" onClick={onBack}>
-        <ArrowLeft size={16} /> Back to your day
+        <ArrowLeft size={16} /> Back to Today
       </button>
       <div className="investigation-heading">
         <div>
@@ -254,7 +253,7 @@ export default function Investigation({
                 onRateChange={setRate}
               />
               <div className="observation-note">
-                <span className="eyebrow">WHAT WE CAN SAY</span>
+                <span className="eyebrow">Observation</span>
                 <p>{moment.observation}</p>
                 <button
                   className="text-button"
@@ -297,11 +296,10 @@ export default function Investigation({
                   <Check size={21} />
                 </span>
                 <div>
-                  <span className="eyebrow">ONE MOMENT, MADE YOURS</span>
-                  <h2>You’ve given the idea a place to live.</h2>
+                  <h2>Saved to notebook</h2>
                   <p>
-                    Your explanation is saved in your notebook. Try the next
-                    moment or revisit it in review.
+                    Your explanation is saved. Try practice questions or
+                    explore another moment.
                   </p>
                 </div>
                 <button className="button primary" onClick={onNext}>
@@ -667,14 +665,6 @@ export default function Investigation({
                 ? "AI suggestions can be mistaken. Check the model and course notes."
                 : "Scripted coaching for this demo. Connect Bedrock for open-ended tutoring."}
             </span>
-          </div>
-          <div className="tutor-bottom-note">
-            <MessageCircle size={16} />
-            <p>
-              Understanding starts with your idea.
-              <br />
-              Even when it changes.
-            </p>
           </div>
         </aside>
       </div>

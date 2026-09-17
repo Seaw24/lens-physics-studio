@@ -6,23 +6,76 @@ export interface ServiceStatus {
   model: string | null;
   region: string;
 }
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code?: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+export async function decodeApiResponse<T>(res: Response): Promise<T> {
+  const text = await res.text();
+  let data: unknown;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = undefined;
+    }
+  }
+  const payload =
+    data && typeof data === "object"
+      ? (data as { error?: unknown; code?: unknown })
+      : undefined;
+  if (!res.ok) {
+    const serverMessage =
+      typeof payload?.error === "string" ? payload.error : undefined;
+    const fallback =
+      res.status === 502 || res.status === 503 || res.status === 504
+        ? "The local AI server is unavailable. Make sure npm run dev is still running, then try again."
+        : "The request could not finish. Please try again.";
+    throw new ApiError(
+      serverMessage || fallback,
+      res.status,
+      typeof payload?.code === "string" ? payload.code : undefined,
+    );
+  }
+  if (data === undefined)
+    throw new ApiError(
+      "The local server returned an unreadable response. Please try again.",
+      res.status,
+      "INVALID_RESPONSE",
+    );
+  return data as T;
+}
+
 async function request<T>(
   url: string,
   body?: unknown,
   signal?: AbortSignal,
 ): Promise<T> {
-  const res = await fetch(url, {
-    method: body ? "POST" : "GET",
-    headers: body ? { "Content-Type": "application/json" } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-    signal,
-  });
-  const data = await res.json();
-  if (!res.ok)
-    throw new Error(
-      data.error || "The request could not finish. Please try again.",
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: body ? "POST" : "GET",
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw error;
+    throw new ApiError(
+      "Momentum could not reach the local server. Make sure npm run dev is still running, then try again.",
+      0,
+      "SERVER_UNREACHABLE",
     );
-  return data;
+  }
+  return decodeApiResponse<T>(res);
 }
 export const getStatus = () => request<ServiceStatus>("/api/status");
 export const askTutor = (

@@ -16,9 +16,11 @@
     "@aws-sdk/client-bedrock-runtime": "^3.922.0",
     "@fontsource-variable/dm-sans": "^5.2.8",
     "@fontsource-variable/fraunces": "^5.2.8",
+    "@napi-rs/canvas": "^1.0.9",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "lucide-react": "^0.468.0",
+    "pdfjs-dist": "^6.3.289",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zod": "^3.25.76"

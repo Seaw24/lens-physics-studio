@@ -573,7 +573,7 @@ export default function App() {
                     <div className="discovery-bar">
                       <span className="pulse-dot" />
                       <div>
-                        <strong>Replaying how Momentum notices</strong>
+                        <strong>Discovery replay</strong>
                         <small>
                           Curated events · normal playback · invitations after
                           each event
@@ -613,38 +613,11 @@ export default function App() {
                     </div>
                   )}
                   <div className="moments-section">
-                    <div className="timeline">
-                      <div className="timeline-head">
-                        <strong>
-                          {moments.length}{" "}
-                          {moments.length === 1 ? "moment" : "moments"} found
-                        </strong>
-                        <span>
-                          0:00 – {formatTime(timelineEnd)}
-                          {isDemo ? " · tracked by Momentum" : " · AI suggested"}
-                        </span>
-                      </div>
-                      <div
-                        className="timeline-track"
-                        role="list"
-                        aria-label="Detected moments on the recording timeline"
-                      >
-                        {moments.map((m, i) => (
-                          <button
-                            key={m.id}
-                            role="listitem"
-                            className={`timeline-pin ${selected === m.id ? "selected" : ""}`}
-                            style={{
-                              left: `${Math.min(97, Math.max(3, (m.time / timelineEnd) * 100))}%`,
-                            }}
-                            onClick={() => selectMoment(m)}
-                            aria-label={`${m.shortTitle} at ${formatTime(m.time)}`}
-                          >
-                            <span className="pin-head">0{i + 1}</span>
-                            <span className="pin-time">{formatTime(m.time)}</span>
-                          </button>
-                        ))}
-                      </div>
+                    <div className="section-heading">
+                      <h2>Events</h2>
+                      <span>
+                        {isDemo ? "Demo clip" : "Your recording"}
+                      </span>
                     </div>
                     <div className="moment-list">
                       {moments.map((m, i) => (
@@ -712,15 +685,7 @@ export default function App() {
                         <div className="invitation-eyebrow">
                           <MomentumMark small />
                           <span>
-                            {invitation ? "JUST NOTICED" : "UP NEXT"} ·{" "}
-                            {formatTime(moment.time)} ·{" "}
-                            {moment.concept === "projectile"
-                              ? "PROJECTILE MOTION"
-                              : moment.concept === "torque"
-                                ? "TORQUE"
-                                : moment.concept === "force"
-                                  ? "NET FORCE"
-                                  : "EQUILIBRIUM"}
+                            {invitation ? "Ready to explore" : "Projectile motion"}
                           </span>
                         </div>
                         <h2>
@@ -851,7 +816,7 @@ export default function App() {
                   ) : (
                     <div className="moment-invitation">
                       <MomentumMark small />
-                      <h2>There’s a question in your everyday.</h2>
+                      <h2>No events yet</h2>
                       <p>
                         Add a recording, then connect it to this week’s physics.
                       </p>
@@ -873,10 +838,6 @@ export default function App() {
                   </div>
                 </aside>
               </div>
-              <footer className="page-footer">
-                <span>MOMENTUM LEARNING STUDIO</span>
-                <span>Notice → Wonder → Understand</span>
-              </footer>
             </div>
           )}
           {page === "investigate" && moment && (
@@ -907,9 +868,7 @@ export default function App() {
                 <em>A world of possibilities.</em>
               </h1>
               <p className="page-intro">
-                Start from the material your class is actually using. Momentum maps
-                the unit, checks the prerequisite ideas, and builds a learning
-                route before the first explanation.
+                Map your material, check your starting point, then practice with your recording.
               </p>
               <div className="course-banner">
                 <div className="course-book">
@@ -1180,8 +1139,7 @@ export default function App() {
             </button>
             {modal === "settings" && (
               <>
-                <div className="eyebrow">MOMENTUM STUDIO</div>
-                <h2 id="modal-title">Made for your pace.</h2>
+                <h2 id="modal-title">Settings</h2>
                 <p className="modal-intro">
                   Choose how the tutor works and see what this prototype uses.
                 </p>

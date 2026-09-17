@@ -372,8 +372,7 @@ export default function CourseDiagnostic({
             <div className="eyebrow">YOUR STARTING POINT</div>
             <h2>A route built around what you need next.</h2>
             <p>
-              This is evidence from one short check—not a permanent mastery
-              label. Momentum will update the route as you practice and explain.
+              Based on one short check — not a permanent mastery score.
             </p>
           </div>
           <div className="results-heading-actions">
@@ -484,8 +483,7 @@ export default function CourseDiagnostic({
           <div className="eyebrow">DIAGNOSE BEFORE TEACHING</div>
           <h2>Your course sets the starting line.</h2>
           <p>
-            Momentum maps the ideas and prerequisites in your material, then checks
-            the few skills that matter for your next lesson.
+            Map your material, then take a short skills check.
           </p>
         </div>
         <button

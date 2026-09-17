@@ -141,8 +141,8 @@ export default function Projectile({
   return (
     <div className="model-lab projectile-lab">
       <div className="lab-meta">
-        <span className="eyebrow">THE SHOT, SIMPLIFIED</span>
-        <span className="source-tag">Ideal model · practice values</span>
+        <span className="eyebrow">Projectile model</span>
+        <span className="source-tag">Practice values</span>
       </div>
       <svg
         viewBox="0 0 640 340"

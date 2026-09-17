@@ -56,11 +56,11 @@ The original six-minute illustrated placeholder was replaced at the user's reque
 
 ## Connect Amazon Bedrock later
 
-The user chose demonstration mode for now. Live AWS calls have not been verified in this workspace.
+Live AWS calls have been verified with the configured Bedrock account.
 
 1. Copy `.env.example` to `.env`.
 2. Add temporary workshop credentials: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`, or select an existing `AWS_PROFILE`. A Bedrock API bearer token is also supported via `AWS_BEARER_TOKEN_BEDROCK`.
-3. Set `AWS_REGION` and a model available in that region. The default is `amazon.nova-lite-v1:0` in `us-east-1`. Nova Lite supports image and document inputs; a text-only model cannot analyze video frames or course PDFs.
+3. Set `AWS_REGION` and a model available in that region. The default is `amazon.nova-lite-v1:0` in `us-east-1`. Nova Lite supports image and document inputs. Claude Opus 4.6 requires an active inference-profile ID (for example, `us.anthropic.claude-opus-4-6-v1`); Momentum renders an uploaded PDF's pages locally before sending them as images to that model.
 4. Restart `npm run dev`, open **Studio settings**, and check the connection.
 
 No keys are stored in the browser or committed to the project. `.env` is ignored. The account must permit the required Bedrock model invocation. Configured does not guarantee that credentials are valid; authentication/model errors are shown when a request runs. Workshop accounts are temporary, according to the event resources.
@@ -73,7 +73,7 @@ Official references: [Converse API with Amazon Nova](https://docs.aws.amazon.com
 - “Analyze sampled frames” decodes up to 90 candidate frames locally, then selects at most 20 using uniform temporal coverage and image-change ranking. Image change is a sampling cue, not a physics inference.
 - The API receives only selected JPEG frames and timestamps. Audio is not included. UI explains this before analysis.
 - Tutor requests contain the current observation, hypothetical model state, and up to ten recent chat messages. No notebook upload is performed.
-- Course PDF analysis accepts one PDF up to 15 MB. The browser sends its bytes to the local API, which forwards them to Bedrock through the Converse document interface under a neutral name. PDF bytes are discarded after the request; only the validated course map and five diagnostic questions are stored in browser storage.
+- Course PDF analysis accepts one PDF up to 15 MB. The browser sends its bytes to the local API. Models that accept Bedrock document blocks receive the PDF under a neutral name; Claude-style models receive up to 10 page images rendered in memory with project-owned PDF.js and Canvas dependencies. No separate Poppler installation is required. The original PDF and rendered pages are discarded after the request; only the validated course map and five diagnostic questions are stored in browser storage.
 - Uploaded documents are treated as untrusted evidence. Instructions inside a PDF cannot change the server prompt or response schema. The student’s local filename is not sent to Bedrock.
 - The Express API validates inputs, restricts browser origins to the local prototype, sets no-store headers, limits requests, and uses bounded cloud request timeouts. This is a local hackathon application, with no production authentication or cross-device synchronization.
 

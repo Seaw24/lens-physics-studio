@@ -478,25 +478,20 @@ export default function EventCoach({
               <strong>Momentum coach</strong>
               <span>
                 {phase === "watch"
-                  ? "Look first. We’ll think together."
+                  ? "Watch first"
                   : phase === "saved"
-                    ? "One idea closer."
-                    : "A question at the right moment."}
+                    ? "Saved"
+                    : "Question"}
               </span>
             </div>
             <span className="prepared-label">Guided demo</span>
           </div>
           {phase === "watch" ? (
             <div className="watch-introduction">
-              <span className="coach-question-kicker">FIRST, JUST WATCH</span>
-              <h2>
-                A whole shot.
-                <br />
-                <em>Before a single question.</em>
-              </h2>
+              <h2>Watch the full shot</h2>
               <p>
-                Follow the ball from release to the basket. Then we’ll return to
-                one small moment and look a little closer.
+                Follow the ball from release to basket. Questions come after the
+                complete event.
               </p>
               <div className="watch-sequence">
                 <span>Release</span>
