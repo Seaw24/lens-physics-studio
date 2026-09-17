@@ -8,6 +8,9 @@ import "./styles.css";
 import "./readability.css";
 import "./basketball.css";
 import "./coaching.css";
+import "./theme-legacy.css";
+import "./theme.css";
+import "./landing.css";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />

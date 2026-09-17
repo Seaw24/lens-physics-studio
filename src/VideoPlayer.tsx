@@ -117,6 +117,21 @@ export default function VideoPlayer({
       anchors.map((a, index) => (index === i ? { ...a, ...point } : a)),
       time,
     );
+  // Tracked ball positions (normalized to the video frame) mapped into the
+  // 960x540 overlay space. Drawn as an animated arc + apex HUD. Labelled
+  // "ideal model" because the values shown are the model's, not measurements.
+  const tracePoints: [number, number][] = trace.map((p) => [
+    offsetX + p.x * imageWidth,
+    offsetY + p.y * imageHeight,
+  ]);
+  const tracePath = tracePoints
+    .map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`)
+    .join(" ");
+  const apexIndex = tracePoints.reduce(
+    (best, [, y], i, arr) => (y < arr[best][1] ? i : best),
+    0,
+  );
+  const apex = tracePoints[apexIndex];
   return (
     <div
       className={`video-player ${compact ? "compact-player" : ""}`}
@@ -169,6 +184,60 @@ export default function VideoPlayer({
             )
           }
         />
+        {trace.length > 1 && (
+          <svg
+            className="trajectory-layer"
+            viewBox="0 0 960 540"
+            aria-hidden="true"
+          >
+            <path className="trajectory-path" d={tracePath} />
+            {tracePoints.map(([x, y], i) => (
+              <circle
+                key={i}
+                className="trajectory-dot"
+                cx={x}
+                cy={y}
+                r={i === apexIndex ? 5 : 3.2}
+                style={{ animationDelay: `${0.35 + i * 0.11}s` }}
+              />
+            ))}
+            {apex && (
+              <g
+                className="trajectory-apex-group"
+                style={{ animationDelay: `${0.35 + apexIndex * 0.11 + 0.3}s` }}
+              >
+                <circle
+                  className="trajectory-apex"
+                  cx={apex[0]}
+                  cy={apex[1]}
+                  r={14}
+                />
+                <g
+                  className="trajectory-hud"
+                  transform={`translate(${Math.min(apex[0] + 22, 700)} ${Math.max(apex[1] - 30, 18)})`}
+                >
+                  <rect width="238" height="46" rx="5" />
+                  <text x="12" y="19" className="hud-eyebrow">
+                    APEX · IDEAL MODEL
+                  </text>
+                  <text x="12" y="36" className="hud-value">
+                    vy = 0 · a = 9.81 m/s² ↓ · vx constant
+                  </text>
+                </g>
+              </g>
+            )}
+            <g
+              className="trajectory-hud trajectory-hud-corner"
+              transform={`translate(${offsetX + 12} ${offsetY + imageHeight - 40})`}
+            >
+              <rect width="244" height="28" rx="4" />
+              <text x="10" y="18" className="hud-eyebrow">
+                TRACKED · {trace.length} POSITIONS · {trace[0].time.toFixed(1)}–
+                {trace[trace.length - 1].time.toFixed(1)} s
+              </text>
+            </g>
+          </svg>
+        )}
         {annotations && (
           <svg
             ref={svg}
@@ -257,7 +326,7 @@ export default function VideoPlayer({
                   y={a.y < 0.12 ? 39 : -19}
                   fill="#f7f7e7"
                   fontSize="14"
-                  fontFamily="DM Sans,sans-serif"
+                  fontFamily="Source Sans 3,sans-serif"
                 >
                   {a.label}
                 </text>

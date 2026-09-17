@@ -227,7 +227,7 @@ export default function CourseDiagnostic({
     const content = draft.trim();
     if (content.length < 80) {
       setMaterialError(
-        "Paste at least a short paragraph so Lens has enough course language to map.",
+        "Paste at least a short paragraph so Momentum has enough course language to map.",
       );
       return;
     }
@@ -369,7 +369,8 @@ export default function CourseDiagnostic({
             <span>/ {questions.length}</span>
           </div>
           <div>
-            <h2>Your results</h2>
+            <div className="eyebrow">YOUR STARTING POINT</div>
+            <h2>A route built around what you need next.</h2>
             <p>
               Based on one short check — not a permanent mastery score.
             </p>
@@ -420,7 +421,7 @@ export default function CourseDiagnostic({
             ))}
           </div>
           <aside className="next-lesson-card">
-            <div className="eyebrow">Recommended next</div>
+            <div className="eyebrow">RECOMMENDED NEXT · 12 MIN</div>
             <span className="route-icon">
               <Route size={21} />
             </span>
@@ -479,7 +480,8 @@ export default function CourseDiagnostic({
           <BrainCircuit size={24} />
         </div>
         <div>
-          <h2>Course diagnostic</h2>
+          <div className="eyebrow">DIAGNOSE BEFORE TEACHING</div>
+          <h2>Your course sets the starting line.</h2>
           <p>
             Map your material, then take a short skills check.
           </p>
@@ -518,7 +520,7 @@ export default function CourseDiagnostic({
                 <span>
                   {pdfStage === "reading"
                     ? "The file is still on this device"
-                    : "Reading pages, topics, and prerequisites — the first run can take a minute"}
+                    : "Reading text, diagrams, topics, and prerequisites"}
                 </span>
                 <button
                   className="text-button"
@@ -531,7 +533,7 @@ export default function CourseDiagnostic({
               <button onClick={() => fileInput.current?.click()}>
                 <Upload size={24} />
                 <strong>Analyze a course PDF</strong>
-                <span>PDF · one file · up to 15 MB · 10 pages with Claude</span>
+                <span>PDF · one file · up to 15 MB</span>
               </button>
             ) : (
               <button onClick={onOpenSettings}>
@@ -543,9 +545,9 @@ export default function CourseDiagnostic({
             <div className="material-privacy">
               <ShieldCheck size={16} />
               <span>
-                The local server sends the PDF or in-memory rendered pages to
-                Amazon Bedrock, then discards them. Only the course map and
-                diagnostic are stored in this browser.
+                PDF bytes are sent through the local server to Amazon Bedrock,
+                then discarded. Only the course map and diagnostic are stored in
+                this browser.
               </span>
             </div>
           </div>
@@ -586,7 +588,7 @@ export default function CourseDiagnostic({
             <div className="diagnostic-section-title">
               <div>
                 <BookOpenCheck size={18} />
-                <h3>Lens found in your material</h3>
+                <h3>Momentum found in your material</h3>
               </div>
               <span>
                 {sources.length} source{sources.length === 1 ? "" : "s"}
@@ -621,12 +623,14 @@ export default function CourseDiagnostic({
             </div>
           </div>
           <aside className="diagnostic-start-card">
+            <div className="eyebrow">READY FOR A QUICK CHECK</div>
             <span className="spark-orbit" aria-hidden="true">
               <Sparkles size={22} />
             </span>
-            <h3>Skills check</h3>
+            <h3>Five questions. A much better place to begin.</h3>
             <p>
-              Five questions from your course material. About 7 minutes.
+              A mix of concepts, interpretation, and calculation—selected from
+              the material at left.
             </p>
             <ul>
               <li>

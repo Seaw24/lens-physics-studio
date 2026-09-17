@@ -13,6 +13,14 @@ export interface Anchor {
   dx?: number;
   dy?: number;
 }
+export interface GeneratedQuestion {
+  id: string;
+  prompt: string;
+  options: string[];
+  correct: number;
+  explanation: string;
+  hint: string;
+}
 export interface Moment {
   id: string;
   title: string;
@@ -29,6 +37,15 @@ export interface Moment {
   anchors: Anchor[];
   context: string;
   trace?: { time: number; x: number; y: number }[];
+  /** Escalating multiple-choice sequence generated for this specific detected
+   * situation (predict -> distinguish/test -> transfer). 1 item when evidence
+   * is limited, up to 3 when the evidence is rich enough to support a full
+   * teaching progression. Falls back to legacy hardcoded per-concept content
+   * in the UI when absent. */
+  questions?: GeneratedQuestion[];
+  /** AI's own honest assessment of how strong the visual evidence for this
+   * moment is; drives how many questions get generated. */
+  evidenceLevel?: "rich" | "limited";
 }
 export interface Message {
   role: "user" | "assistant";

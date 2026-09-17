@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { MomentumMark } from "./Brand";
 import {
   ArrowDownToLine,
   ArrowLeft,
@@ -14,7 +15,10 @@ import {
   Film,
   FlaskConical,
   Layers3,
+  Leaf,
+  Lightbulb,
   LoaderCircle,
+  Play,
   Plus,
   RotateCcw,
   Settings2,
@@ -41,10 +45,11 @@ import Investigation from "./CoachedInvestigation";
 import CourseDiagnostic from "./CourseDiagnostic";
 import Guide from "./Guide";
 import VideoPlayer from "./VideoPlayer";
+import Landing from "./Landing";
 import { BasketballArt } from "./Projectile";
 
 type Page = "today" | "course" | "moments" | "review" | "investigate" | "guide";
-type Modal = "settings" | "upload" | null;
+type Modal = "settings" | "present" | "upload" | null;
 const notebookKey = "lens-notebook-v1";
 function readRecords(): LearningRecord[] {
   try {
@@ -66,15 +71,6 @@ function readRecords(): LearningRecord[] {
     return [];
   }
 }
-function LensMark({ small = false }: { small?: boolean }) {
-  return (
-    <span className={`lens-mark ${small ? "small" : ""}`}>
-      <span />
-      <span />
-      <span />
-    </span>
-  );
-}
 function Pill({ children }: { children: ReactNode }) {
   return <span className="pill">{children}</span>;
 }
@@ -86,8 +82,9 @@ export default function App() {
     [mode, setMode] = useState<"bedrock" | "rehearsal">("rehearsal"),
     [moments, setMoments] = useState<Moment[]>(DEMO_MOMENTS),
     [selected, setSelected] = useState("shot"),
+    [landing, setLanding] = useState(true),
     [src, setSrc] = useState("/demo/basketball-shot.mp4"),
-    [fileName, setFileName] = useState("A shot on the court"),
+    [fileName, setFileName] = useState("Sample: basketball shot"),
     [isDemo, setIsDemo] = useState(true),
     [seek, setSeek] = useState({ time: 14.2, nonce: 0 }),
     [rate, setRate] = useState(1),
@@ -103,7 +100,8 @@ export default function App() {
     ),
     [progress, setProgress] = useState(0),
     [uploadError, setUploadError] = useState(""),
-    [sampleCount, setSampleCount] = useState(0);
+    [sampleCount, setSampleCount] = useState(0),
+    [presentationStep, setPresentationStep] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null),
     objectUrl = useRef(""),
     analysis = useRef<AbortController | null>(null),
@@ -214,13 +212,13 @@ export default function App() {
     }
   }
   function exportNotebook() {
-    const text = `# My Lens notebook\n\n${records.map((r) => `## ${r.title}\n${r.concept} · ${new Date(r.completedAt).toLocaleDateString()}\n\nAnswer: ${r.answer}\n\n${r.reflection}\n\nHints used: ${r.hints}. Tutor mode: ${r.mode}.\n`).join("\n")}`;
+    const text = `# My Momentum notebook\n\n${records.map((r) => `## ${r.title}\n${r.concept} · ${new Date(r.completedAt).toLocaleDateString()}\n\nAnswer: ${r.answer}\n\n${r.reflection}\n\nHints used: ${r.hints}. Tutor mode: ${r.mode}.\n`).join("\n")}`;
     const url = URL.createObjectURL(
       new Blob([text], { type: "text/markdown" }),
     );
     const link = document.createElement("a");
     link.href = url;
-    link.download = "my-lens-notebook.md";
+    link.download = "my-momentum-notebook.md";
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -231,7 +229,7 @@ export default function App() {
       objectUrl.current = "";
     }
     setSrc("/demo/basketball-shot.mp4");
-    setFileName("A shot on the court");
+    setFileName("Sample: basketball shot");
     setIsDemo(true);
     setMoments(DEMO_MOMENTS);
     setSelected("shot");
@@ -337,15 +335,33 @@ export default function App() {
       setStage("idle");
     }
   }
+  const timelineEnd = Math.max(
+    isDemo ? 48.6 : 0,
+    ...moments.map((m) => m.end),
+    1,
+  );
   const navItems = [
-    { id: "today", label: "Today", icon: Eye },
-    { id: "course", label: "Course", icon: BookOpen },
+    { id: "today", label: "Your day", icon: Eye },
+    { id: "course", label: "Your course", icon: BookOpen },
     { id: "moments", label: "Notebook", icon: Bookmark },
-    { id: "review", label: "Practice", icon: Layers3 },
-    { id: "guide", label: "Guide", icon: CircleHelp },
+    { id: "review", label: "Practice & recall", icon: Layers3 },
+    { id: "guide", label: "Guide & about", icon: CircleHelp },
   ] as const;
   return (
     <div className="app-shell">
+      {landing && (
+        <Landing
+          onEnter={() => setLanding(false)}
+          onSample={() => {
+            useDemo();
+            setLanding(false);
+          }}
+          onUpload={() => {
+            setLanding(false);
+            setTimeout(() => fileInput.current?.click(), 60);
+          }}
+        />
+      )}
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
@@ -353,13 +369,14 @@ export default function App() {
         <button
           className="brand"
           onClick={() => navigate("today")}
-          aria-label="Lens home"
+          aria-label="Momentum home"
         >
-          <LensMark />
+          <MomentumMark />
           <span>
-            lens<span className="brand-period">.</span>
+            momentum<span className="brand-period">.</span>
           </span>
         </button>
+        <p className="brand-caption">A new way to see.</p>
         <nav aria-label="Main navigation">
           {navItems.map(({ id, label, icon: Icon }) => (
             <button
@@ -386,14 +403,26 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-course">
+          <span className="eyebrow">IN YOUR ORBIT</span>
           <div className="mini-book">
             <BookOpen size={19} />
           </div>
-          <strong>Week 04</strong>
+          <strong>Physics, connected.</strong>
           <p>Projectile motion</p>
           <button className="text-button" onClick={() => navigate("course")}>
-            Open course <ArrowUpRight size={14} />
+            Open this week <ArrowUpRight size={14} />
           </button>
+          <div className="course-progress">
+            <span
+              style={{
+                width: `${Math.min(100, (new Set(records.map((r) => r.concept)).size / 1) * 100)}%`,
+              }}
+            />
+          </div>
+          <small>
+            {new Set(records.map((r) => r.concept)).size} of 1 connection
+            explored
+          </small>
         </div>
         <div className="sidebar-bottom">
           <button
@@ -430,6 +459,15 @@ export default function App() {
               />
               {mode === "bedrock" ? "Bedrock connected" : "Demo mode"}
             </button>
+            <button
+              className="present-button"
+              onClick={() => {
+                setPresentationStep(0);
+                setModal("present");
+              }}
+            >
+              <Play size={13} /> Present demo
+            </button>
           </div>
         </header>
         <main id="main-content" tabIndex={-1}>
@@ -437,18 +475,53 @@ export default function App() {
             <div className="day-page page-enter">
               <div className="page-heading">
                 <div>
-                  <h1>Basketball shot</h1>
+                  <h1>
+                    Any recording.
+                    <br />
+                    <em>The physics inside it.</em>
+                  </h1>
                   <p>
-                    Watch the event, answer guided questions, then test the
-                    physics in the lab.
+                    A door, a swing, a bike, a ball — drop in a clip of anything.
+                    Momentum finds the physics in it and turns it into a short
+                    lesson:{" "}
+                    <span className="how-steps">
+                      <b>predict</b> · <b>test</b> · <b>explain</b>
+                    </span>
                   </p>
                 </div>
+              </div>
+              <div className="intake">
                 <button
-                  className="button secondary upload-button"
-                  onClick={() => setModal("upload")}
+                  className="dropzone"
+                  onClick={() => fileInput.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    openFile(e.dataTransfer.files?.[0]);
+                  }}
                 >
-                  <Plus size={16} /> Add a recording
+                  <span className="dropzone-icon">
+                    <Upload size={26} strokeWidth={1.5} />
+                  </span>
+                  <strong>Drop a recording here</strong>
+                  <span>
+                    or browse · MP4, WebM, MOV · the full video stays on your
+                    device
+                  </span>
                 </button>
+                <div className="samples">
+                  <span className="samples-label">Or try a sample</span>
+                  <button
+                    className={`sample-tile ${isDemo ? "active" : ""}`}
+                    onClick={useDemo}
+                  >
+                    <img src="/demo/shot-poster.jpg" alt="" />
+                    <span>
+                      <strong>Basketball shot</strong>
+                      <small>projectile motion · 49 s</small>
+                    </span>
+                  </button>
+                </div>
               </div>
               <div className="daily-layout">
                 <section className="day-recording">
@@ -458,14 +531,12 @@ export default function App() {
                       <strong>{fileName}</strong>
                       <span className="quiet-label">
                         {isDemo
-                          ? "Your basketball clip · 49 seconds"
-                          : "Local recording"}
+                          ? "Sample recording · 49 s"
+                          : "Your recording"}
                       </span>
                     </div>
                     <span className="source-tag">
-                      {isDemo
-                        ? "1 guided investigation"
-                        : `${moments.length} AI suggestions`}
+                      {isDemo ? "Sample" : "Analyzed by Momentum"}
                     </span>
                   </div>
                   <VideoPlayer
@@ -504,7 +575,8 @@ export default function App() {
                       <div>
                         <strong>Discovery replay</strong>
                         <small>
-                          Invitations appear after each event
+                          Curated events · normal playback · invitations after
+                          each event
                         </small>
                       </div>
                       <button
@@ -611,14 +683,16 @@ export default function App() {
                         className={`moment-invitation ${invitation ? "just-noticed" : ""}`}
                       >
                         <div className="invitation-eyebrow">
-                          <LensMark small />
+                          <MomentumMark small />
                           <span>
                             {invitation ? "Ready to explore" : "Projectile motion"}
                           </span>
                         </div>
                         <h2>
-                          {moment.concept === "projectile"
-                            ? "At the highest point, does gravity take a break?"
+                          {moment.source === "bedrock"
+                            ? moment.title
+                            : moment.concept === "projectile"
+                              ? "At the highest point, does gravity take a break?"
                             : moment.concept === "torque"
                               ? "Why is the handle so far from the hinge?"
                               : moment.concept === "force"
@@ -710,14 +784,14 @@ export default function App() {
                                 : [...prev, moment.id],
                             );
                             setInvitation(null);
-                            setToast("Saved for later.");
+                            setToast("Saved for your next break.");
                           }}
                         >
-                          <Clock3 size={13} /> Save for later
+                          <Clock3 size={13} /> Save for a quieter moment
                         </button>
                       </div>
                       <div className="course-connection">
-                        <span className="eyebrow">Course connection</span>
+                        <span className="eyebrow">RIGHT ON TIME FOR CLASS</span>
                         <div>
                           <BookOpen size={21} />
                           <h3>
@@ -735,16 +809,16 @@ export default function App() {
                           className="text-button"
                           onClick={() => navigate("course")}
                         >
-                          Open course <ArrowUpRight size={14} />
+                          See your lecture notes <ArrowUpRight size={14} />
                         </button>
                       </div>
                     </>
                   ) : (
                     <div className="moment-invitation">
-                      <LensMark small />
+                      <MomentumMark small />
                       <h2>No events yet</h2>
                       <p>
-                        Add a recording or use the demo clip to get started.
+                        Add a recording, then connect it to this week’s physics.
                       </p>
                       <button
                         className="button pale"
@@ -754,6 +828,14 @@ export default function App() {
                       </button>
                     </div>
                   )}
+                  <div className="quiet-promise">
+                    <Leaf size={18} />
+                    <p>
+                      A little curiosity.
+                      <br />
+                      At your own pace.
+                    </p>
+                  </div>
                 </aside>
               </div>
             </div>
@@ -779,11 +861,14 @@ export default function App() {
           )}
           {page === "course" && (
             <div className="course-page page-enter">
-              <div className="eyebrow">Week 04</div>
-              <h1>Projectile motion</h1>
+              <div className="eyebrow">YOUR COURSE / WEEK 04</div>
+              <h1>
+                A little theory.
+                <br />
+                <em>A world of possibilities.</em>
+              </h1>
               <p className="page-intro">
-                Map your material, check your starting point, then practice with
-                the basketball demo.
+                Map your material, check your starting point, then practice with your recording.
               </p>
               <div className="course-banner">
                 <div className="course-book">
@@ -807,14 +892,87 @@ export default function App() {
                   navigate("investigate");
                 }}
               />
+              <div className="course-content">
+                <section>
+                  <div className="section-heading">
+                    <h2>Your lecture notes</h2>
+                    <span>CURATED FOR THIS DEMO</span>
+                  </div>
+                  {COURSE.notes.map((note, i) => (
+                    <article className="lecture-note" key={note.id}>
+                      <span className="lecture-number">{note.id}</span>
+                      <div>
+                        <h3>{note.title}</h3>
+                        <p>{note.body}</p>
+                        <div className="lecture-equation">
+                          {
+                            [
+                              "aₓ = 0     aᵧ = −g",
+                              "At the apex: vᵧ = 0, aᵧ = −g",
+                              "x = v₀ cos θ · t",
+                            ][i]
+                          }
+                        </div>
+                        <button
+                          className="text-button"
+                          onClick={() => {
+                            if (!isDemo) {
+                              useDemo();
+                              setSelected(DEMO_MOMENTS[0].id);
+                              navigate("investigate");
+                            } else
+                              investigate(
+                                moments.find(
+                                  (m) => m.concept === DEMO_MOMENTS[0].concept,
+                                ) || DEMO_MOMENTS[0],
+                              );
+                          }}
+                        >
+                          See it in an everyday moment{" "}
+                          <ArrowUpRight size={15} />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </section>
+                <aside className="objectives">
+                  <span className="eyebrow">WHAT YOU’RE WORKING TOWARD</span>
+                  <h2>
+                    From remembering
+                    <br />
+                    to reasoning.
+                  </h2>
+                  {COURSE.objectives.map((objective, i) => (
+                    <div key={objective}>
+                      <span>0{i + 1}</span>
+                      <p>{objective}</p>
+                    </div>
+                  ))}
+                  <div className="objective-note">
+                    <CircleHelp size={18} />
+                    <p>
+                      These are learning goals, not inferred mastery scores.
+                      Your notebook keeps the explanations you actually write.
+                    </p>
+                  </div>
+                </aside>
+              </div>
             </div>
           )}
           {page === "moments" && (
             <div className="notebook-page page-enter">
               <div className="page-heading">
                 <div>
-                  <h1>Notebook</h1>
-                  <p>Saved reflections from your investigations.</p>
+                  <div className="eyebrow">YOUR NOTEBOOK</div>
+                  <h1>
+                    Ideas with
+                    <br />
+                    <em>somewhere to live.</em>
+                  </h1>
+                  <p>
+                    Your moments, your reasoning, your growing collection of
+                    connections.
+                  </p>
                 </div>
                 {records.length > 0 && (
                   <button className="button secondary" onClick={exportNotebook}>
@@ -828,10 +986,10 @@ export default function App() {
                     <BookOpen size={66} strokeWidth={0.9} />
                     <span>✳</span>
                   </div>
-                  <h2>Nothing saved yet</h2>
+                  <h2>Your first connection is waiting.</h2>
                   <p>
-                    Complete an investigation and your explanation will appear
-                    here.
+                    Explore a moment, test your idea, and explain it in your own
+                    words. We’ll keep that explanation here.
                   </p>
                   <button
                     className="button primary"
@@ -983,7 +1141,7 @@ export default function App() {
               <>
                 <h2 id="modal-title">Settings</h2>
                 <p className="modal-intro">
-                  Tutor mode and data handling for this prototype.
+                  Choose how the tutor works and see what this prototype uses.
                 </p>
                 <div className="settings-block">
                   <h3>Tutor connection</h3>
@@ -1058,21 +1216,30 @@ export default function App() {
                   <div className="privacy-row">
                     <BookOpen size={19} />
                     <p>
-                      Course PDFs are processed by this local server, then sent
-                      to Bedrock as a document or in-memory rendered pages and
-                      discarded after analysis. The resulting course map and
+                      Course PDFs are sent through this local server to Bedrock
+                      for analysis, then discarded. The resulting course map and
                       diagnostic are stored in this browser; the PDF is not.
                     </p>
                   </div>
+                </div>
+                <div className="settings-block">
+                  <h3>About this demonstration</h3>
+                  <p>
+                    The basketball footage is real. The course and learning
+                    prompts are prepared examples. Models calculate real physics
+                    from hypothetical values. Live video discovery requires
+                    Bedrock and is limited to the frames it receives.
+                  </p>
                 </div>
               </>
             )}
             {modal === "upload" && (
               <>
-                <h2 id="modal-title">Add a recording</h2>
+                <div className="eyebrow">BRING YOUR OWN EVERYDAY</div>
+                <h2 id="modal-title">Start with a recording.</h2>
                 <p className="modal-intro">
-                  Side-view basketball shots work best. MP4 or WebM, up to 500
-                  MB.
+                  A basketball shot works best from a stationary side view, with
+                  the full ball flight visible. Short clips are welcome.
                 </p>
                 <button
                   className="upload-zone"
@@ -1240,6 +1407,80 @@ export default function App() {
                 </button>
               </>
             )}
+            {modal === "present" && (
+              <>
+                <div className="eyebrow">THE THREE-MINUTE STORY</div>
+                <h2 id="modal-title">
+                  From “I know the formula”
+                  <br />
+                  <em>to “I see it everywhere.”</em>
+                </h2>
+                <p className="modal-intro">
+                  Walk through one student’s learning loop. This demo uses a
+                  prepared course and your basketball recording.
+                </p>
+                <div className="presentation-steps">
+                  {[
+                    {
+                      title: "A shot supplies the question.",
+                      body: "Explore this event plays just the 2.3-second shot from start to finish. Then the player returns to a prepared teaching frame.",
+                      icon: Eye,
+                    },
+                    {
+                      title: "The student supplies a first idea.",
+                      body: "Answer inside the video stage. Physics arrows appear directly over the basketball to explain gravity, vertical velocity, and horizontal motion. The separate Physics lounge is for broader questions.",
+                      icon: Lightbulb,
+                    },
+                    {
+                      title: "An experiment changes their thinking.",
+                      body: "Play the ideal trajectory, then pause at the apex. Vertical velocity reaches zero while downward acceleration remains. Change the launch angle and speed.",
+                      icon: FlaskConical,
+                    },
+                    {
+                      title: "Understanding leaves a trace.",
+                      body: "Explain why gravity stays active, save the connection, and try the idea with a different ball or launch condition.",
+                      icon: Bookmark,
+                    },
+                  ].map(({ title, body, icon: Icon }, i) => (
+                    <button
+                      key={title}
+                      className={presentationStep === i ? "current" : ""}
+                      onClick={() => setPresentationStep(i)}
+                    >
+                      <span className="presentation-icon">
+                        <Icon size={19} />
+                      </span>
+                      <div>
+                        <span>0{i + 1}</span>
+                        <h3>{title}</h3>
+                        {presentationStep === i && <p>{body}</p>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="presentation-actions">
+                  <button className="button primary" onClick={replayDiscovery}>
+                    <Play size={15} /> Start the basketball clip
+                  </button>
+                  <button
+                    className="text-button"
+                    onClick={() => {
+                      useDemo();
+                      setSelected("shot");
+                      navigate("investigate");
+                      setModal(null);
+                    }}
+                  >
+                    Jump to the interaction <ArrowRight size={15} />
+                  </button>
+                </div>
+                <p className="microcopy">
+                  Demo tutor responses are scripted. The Bedrock adapter
+                  supports live tutoring and sampled-frame analysis when
+                  credentials are configured.
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1257,7 +1498,7 @@ function Review({
   const questions = [
     {
       id: "apex",
-      concept: "Gravity",
+      concept: "GRAVITY / A NEW SETTING",
       title: "A volleyball reaches its peak.",
       context:
         "A volleyball has left the player’s hand and reached the highest point of its flight. Ignore air resistance.",
@@ -1269,7 +1510,7 @@ function Review({
     },
     {
       id: "horizontal",
-      concept: "Components",
+      concept: "COMPONENTS / FOLLOW THE MOTION",
       title: "The ball keeps travelling.",
       context:
         "A basketball travels through the air after release. Gravity is the only force in our ideal model.",
@@ -1281,7 +1522,7 @@ function Review({
     },
     {
       id: "mass",
-      concept: "Transfer",
+      concept: "TRANSFER / CHANGE THE BALL",
       title: "A heavier ball. A different path?",
       context:
         "Two balls have different masses but the same launch speed, angle, and height. Ignore air resistance.",
@@ -1300,9 +1541,15 @@ function Review({
     correct = choice === q.answer;
   return (
     <div className="review-page page-enter">
-      <h1>Practice</h1>
+      <div className="eyebrow">PRACTICE & RECALL</div>
+      <h1>
+        Same idea.
+        <br />
+        <em>A different everyday.</em>
+      </h1>
       <p className="page-intro">
-        Apply projectile motion to new scenarios.
+        Can you recognize the relationship when the scene changes? Try before
+        looking back.
       </p>
       <div className="review-layout">
         <section className="review-card">
@@ -1337,7 +1584,11 @@ function Review({
                 role="status"
               >
                 <div>
-                  <strong>{correct ? "Correct" : "Not quite"}</strong>
+                  <strong>
+                    {correct
+                      ? "You carried the idea into a new setting."
+                      : "A useful place to revisit."}
+                  </strong>
                   <p>{q.explanation}</p>
                 </div>
               </div>
@@ -1366,9 +1617,15 @@ function Review({
           )}
         </section>
         <aside className="review-aside">
-          <h2>Transfer check</h2>
+          <span className="eyebrow">BUILDING THE CONNECTION</span>
+          <h2>
+            Remember the idea,
+            <br />
+            not just the answer.
+          </h2>
           <p>
-            Same physics, different context — can you recognize the pattern?
+            These practice questions change the object or launch conditions.
+            That’s how you check whether the relationship travels with you.
           </p>
           <div className="review-stats">
             <span>
@@ -1383,7 +1640,7 @@ function Review({
           {records.find((r) => r.concept === "projectile") ? (
             <div className="past-reflection">
               <Bookmark size={17} />
-              <span className="eyebrow">Your reflection</span>
+              <span className="eyebrow">YOUR EARLIER EXPLANATION</span>
               <details>
                 <summary>Look back after you try</summary>
                 <p>

@@ -1,4 +1,4 @@
-# Lens — the physics of a basketball shot
+# Momentum — physics from any recording
 
 A working hackathon prototype that turns a real basketball clip into a learning loop: observe, predict, experiment, explain, and recall.
 
@@ -34,7 +34,7 @@ After a build, `npm start` serves the compiled site and API together at http://1
 
 **Present demo** contains a short presentation guide. **Replay discovery** demonstrates a prepared prompt after the shot. Toggle **I'm busy** to defer it. This is an explicit availability control, not inferred attention, gaze tracking, or a live detector.
 
-**Guide & about** introduces the website, walks through the learning loop, explains the separate roles of the coach and lounge, and offers a downloadable product brief (`public/lens-product-brief.md`). The guide also describes the limitations and how to replay, change speed, and preserve work.
+**Guide & about** introduces the website, walks through the learning loop, explains the separate roles of the coach and lounge, and offers a downloadable product brief (`public/momentum-product-brief.md`). The guide also describes the limitations and how to replay, change speed, and preserve work.
 
 ## What is real, prepared, and hypothetical
 
@@ -60,7 +60,7 @@ Live AWS calls have been verified with the configured Bedrock account.
 
 1. Copy `.env.example` to `.env`.
 2. Add temporary workshop credentials: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`, or select an existing `AWS_PROFILE`. A Bedrock API bearer token is also supported via `AWS_BEARER_TOKEN_BEDROCK`.
-3. Set `AWS_REGION` and a model available in that region. The default is `amazon.nova-lite-v1:0` in `us-east-1`. Nova Lite supports image and document inputs. Claude Opus 4.6 requires an active inference-profile ID (for example, `us.anthropic.claude-opus-4-6-v1`); Lens renders an uploaded PDF's pages locally before sending them as images to that model.
+3. Set `AWS_REGION` and a model available in that region. The default is `amazon.nova-lite-v1:0` in `us-east-1`. Nova Lite supports image and document inputs. Claude Opus 4.6 requires an active inference-profile ID (for example, `us.anthropic.claude-opus-4-6-v1`); Momentum renders an uploaded PDF's pages locally before sending them as images to that model.
 4. Restart `npm run dev`, open **Studio settings**, and check the connection.
 
 No keys are stored in the browser or committed to the project. `.env` is ignored. The account must permit the required Bedrock model invocation. Configured does not guarantee that credentials are valid; authentication/model errors are shown when a request runs. Workshop accounts are temporary, according to the event resources.

@@ -70,7 +70,7 @@ async function request<T>(
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") throw error;
     throw new ApiError(
-      "Lens could not reach the local server. Make sure npm run dev is still running, then try again.",
+      "Momentum could not reach the local server. Make sure npm run dev is still running, then try again.",
       0,
       "SERVER_UNREACHABLE",
     );

@@ -475,7 +475,7 @@ export default function EventCoach({
               l<span>•</span>
             </span>
             <div>
-              <strong>Lens coach</strong>
+              <strong>Momentum coach</strong>
               <span>
                 {phase === "watch"
                   ? "Watch first"

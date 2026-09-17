@@ -19,6 +19,7 @@ import {
   type Moment,
   type LearningRecord,
   type Message,
+  type GeneratedQuestion,
 } from "../shared/physics";
 import { askTutor } from "./api";
 import Models, { type ModelState } from "./Models";
@@ -54,6 +55,7 @@ export default function Investigation({
       feedback: string;
     } | null>(null),
     [reflection, setReflection] = useState(""),
+    [explainChoice, setExplainChoice] = useState<string | null>(null),
     [saved, setSaved] = useState(false),
     [state, setState] = useState<ModelState>({
       force: 10,
@@ -88,6 +90,25 @@ export default function Investigation({
         : moment.concept === "torque"
           ? "A 10 N perpendicular push at 0.80 m produces 8 N·m. What force gives the same torque at 0.20 m?"
           : "A 20 N load is 0.40 m left of a pivot. What downward force at 0.80 m to the right balances it?";
+  // AI-generated escalating question set for this specific detected moment
+  // (predict -> ... -> transfer). Falls back to the hardcoded generic
+  // content above when a moment hasn't been generated with this field yet.
+  const genQuestions: GeneratedQuestion[] | null =
+    moment.questions && moment.questions.length > 0 ? moment.questions : null;
+  const predictQuestion = genQuestions ? genQuestions[0] : null;
+  const explainQuestion = genQuestions
+    ? genQuestions[genQuestions.length - 1]
+    : null;
+  const predictOptions = predictQuestion
+    ? predictQuestion.options
+    : moment.concept === "projectile"
+      ? ["Downward", "Upward", "Zero net force"]
+      : moment.concept === "force"
+        ? ["Left", "Right", "Zero net force"]
+        : moment.concept === "torque"
+          ? ["More force", "Less force", "The same force"]
+          : ["Yes, farther away", "No, forces must be equal", "I’m not sure yet"];
+  const predictHeading = predictQuestion ? predictQuestion.prompt : moment.question;
   async function send(text: string, isHint = false) {
     if (!text.trim() || busy) return;
     const nextHints = isHint ? Math.min(8, hints + 1) : hints;
@@ -291,20 +312,9 @@ export default function Investigation({
                   <span>01 / PREDICT</span>
                   <small>No formula needed. Trust your first thought.</small>
                 </div>
-                <h2>{moment.question}</h2>
+                <h2>{predictHeading}</h2>
                 <div className="prediction-options">
-                  {(moment.concept === "projectile"
-                    ? ["Downward", "Upward", "Zero net force"]
-                    : moment.concept === "force"
-                      ? ["Left", "Right", "Zero net force"]
-                      : moment.concept === "torque"
-                        ? ["More force", "Less force", "The same force"]
-                        : [
-                            "Yes, farther away",
-                            "No, forces must be equal",
-                            "I’m not sure yet",
-                          ]
-                  ).map((option) => (
+                  {predictOptions.map((option) => (
                     <button
                       key={option}
                       aria-pressed={prediction === option}
@@ -372,60 +382,94 @@ export default function Investigation({
                   <span>03 / EXPLAIN</span>
                   <small>A new answer means a new way of seeing.</small>
                 </div>
-                <h2>{practice}</h2>
+                <h2>{explainQuestion ? explainQuestion.prompt : practice}</h2>
                 <div className="answer-form">
-                  <label className="sr-only" htmlFor="practice-answer">
-                    Your answer
-                  </label>
-                  {moment.concept === "projectile" ? (
-                    <select
-                      id="practice-answer"
-                      value={answer}
-                      onChange={(e) => {
-                        setAnswer(e.target.value);
-                        setFeedback(null);
-                      }}
-                    >
-                      <option value="">Choose a direction</option>
-                      <option>Downward</option>
-                      <option>Upward</option>
-                      <option>Zero</option>
-                    </select>
-                  ) : moment.concept === "force" ? (
-                    <select
-                      id="practice-answer"
-                      value={answer}
-                      onChange={(e) => {
-                        setAnswer(e.target.value);
-                        setFeedback(null);
-                      }}
-                    >
-                      <option value="">Choose a direction</option>
-                      <option>Left</option>
-                      <option>Right</option>
-                      <option>Zero</option>
-                    </select>
-                  ) : (
-                    <div className="unit-input">
-                      <input
-                        id="practice-answer"
-                        inputMode="decimal"
-                        value={answer}
-                        onChange={(e) => {
-                          setAnswer(e.target.value);
-                          setFeedback(null);
-                        }}
-                        placeholder="Your answer"
-                      />
-                      <span>N</span>
+                  {explainQuestion ? (
+                    <div className="prediction-options">
+                      {explainQuestion.options.map((option) => (
+                        <button
+                          key={option}
+                          aria-pressed={explainChoice === option}
+                          className={explainChoice === option ? "chosen" : ""}
+                          onClick={() => {
+                            setExplainChoice(option);
+                            setAnswer(option);
+                            setFeedback(null);
+                          }}
+                        >
+                          {option}
+                          {explainChoice === option && <Check size={14} />}
+                        </button>
+                      ))}
                     </div>
+                  ) : (
+                    <>
+                      <label className="sr-only" htmlFor="practice-answer">
+                        Your answer
+                      </label>
+                      {moment.concept === "projectile" ? (
+                        <select
+                          id="practice-answer"
+                          value={answer}
+                          onChange={(e) => {
+                            setAnswer(e.target.value);
+                            setFeedback(null);
+                          }}
+                        >
+                          <option value="">Choose a direction</option>
+                          <option>Downward</option>
+                          <option>Upward</option>
+                          <option>Zero</option>
+                        </select>
+                      ) : moment.concept === "force" ? (
+                        <select
+                          id="practice-answer"
+                          value={answer}
+                          onChange={(e) => {
+                            setAnswer(e.target.value);
+                            setFeedback(null);
+                          }}
+                        >
+                          <option value="">Choose a direction</option>
+                          <option>Left</option>
+                          <option>Right</option>
+                          <option>Zero</option>
+                        </select>
+                      ) : (
+                        <div className="unit-input">
+                          <input
+                            id="practice-answer"
+                            inputMode="decimal"
+                            value={answer}
+                            onChange={(e) => {
+                              setAnswer(e.target.value);
+                              setFeedback(null);
+                            }}
+                            placeholder="Your answer"
+                          />
+                          <span>N</span>
+                        </div>
+                      )}
+                    </>
                   )}
                   <button
                     className="button secondary"
-                    disabled={!answer}
-                    onClick={() =>
-                      setFeedback(assessAnswer(moment.concept, answer))
-                    }
+                    disabled={explainQuestion ? !explainChoice : !answer}
+                    onClick={() => {
+                      if (explainQuestion) {
+                        const chosenIndex =
+                          explainQuestion.options.indexOf(explainChoice || "");
+                        const correct = chosenIndex === explainQuestion.correct;
+                        setFeedback({
+                          correct,
+                          feedback: correct
+                            ? explainQuestion.explanation
+                            : explainQuestion.hint,
+                        });
+                      } else {
+                        setFeedback(assessAnswer(moment.concept, answer));
+                      }
+                    }}
                   >
                     Check my reasoning <ArrowRight size={15} />
                   </button>
@@ -444,12 +488,14 @@ export default function Investigation({
                       <>
                         <Lightbulb size={17} />
                         <span>
-                          Not quite yet.{" "}
-                          {moment.concept === "projectile"
-                            ? "Pause the model at the top. Does the gravity arrow disappear when vertical velocity reaches zero?"
-                            : moment.concept === "force"
-                              ? "Look at the change in velocity. Try testing the other force direction."
-                              : "Use the model to match 8 N·m at the distance in this question, then check the required force."}
+                          {explainQuestion
+                            ? feedback.feedback
+                            : "Not quite yet. " +
+                              (moment.concept === "projectile"
+                                ? "Pause the model at the top. Does the gravity arrow disappear when vertical velocity reaches zero?"
+                                : moment.concept === "force"
+                                  ? "Look at the change in velocity. Try testing the other force direction."
+                                  : "Use the model to match 8 N·m at the distance in this question, then check the required force.")}
                         </span>
                       </>
                     )}
@@ -535,7 +581,7 @@ export default function Investigation({
               <div className={`chat-message ${message.role}`} key={i}>
                 {message.role === "assistant" && (
                   <span className="message-source">
-                    LENS <span>{message.mode}</span>
+                    MOMENTUM <span>{message.mode}</span>
                   </span>
                 )}
                 <p>{message.content}</p>

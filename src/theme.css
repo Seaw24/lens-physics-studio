@@ -1,0 +1,120 @@
+/* =====================================================================
+   MOMENTUM · light theme layer (loaded last). Navy ink, cobalt interface
+   accent, orange reserved for physics data (arc, pins, HUD).
+   ===================================================================== */
+:root {
+  --paper: #f7f8fb; --white: #ffffff; --ink: #0b1b32; --muted: #667085;
+  --green: #2b4dff; --deep: #0b1b32; --line: #e4e8ef; --accent: #eef1ff;
+  --blue: #2b4dff; --blue-deep: #1f3de6; --blue-soft: #eef1ff;
+  --hot: #ff6a1f; --hot-deep: #e05a12; --hot-ink: #ffffff;
+  --mono: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --serif: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --sans: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+html, body, #root, .app-shell, .main-shell, main { background: var(--paper) !important; color: var(--ink); }
+body { background-image: none !important; }
+.app-shell :is(h1, h2, h3, h4) { color: var(--ink) !important; letter-spacing: -0.015em; }
+.app-shell h1 em, .app-shell h2 em { color: var(--blue) !important; }
+.app-shell :is(p, li, td, th, label) { color: #425466 !important; }
+.app-shell :is(small, .quiet-label, .microcopy, .lab-footnote, .tutor-disclaimer, .modal-intro, .notebook-meta, .lab-meta,
+  .time-readout, .moment-timestamp, .pin-time, .observation-note, .coach-small-note, .objective-note, .target-note) { color: var(--muted) !important; }
+.app-shell :is(.eyebrow, .task-label, .samples-label, .prepared-label, .week-badge, .coach-question-kicker, .heading-eyebrow,
+  .invitation-eyebrow span, .message-source) { font-family: var(--mono) !important; font-size: 10.5px !important; letter-spacing: 1.5px !important;
+  text-transform: uppercase; color: var(--blue) !important; }
+.brand > span:last-child { color: var(--ink) !important; } .brand-period { color: var(--blue) !important; }
+.lens-mark > span { border-color: var(--blue) !important; } .brand-caption { color: var(--muted) !important; }
+/* momentum brand mark: trail builds toward a solid lead + orange spark */
+.momentum-mark { width: 33px; height: 33px; flex: none; display: block; }
+.momentum-mark.small { width: 21px; height: 21px; }
+.momentum-trail-1 { fill: var(--blue); opacity: 0.22; }
+.momentum-trail-2 { fill: var(--blue); opacity: 0.42; }
+.momentum-trail-3 { fill: var(--blue); opacity: 0.68; }
+.momentum-lead { fill: var(--blue); }
+.momentum-spark { fill: var(--hot); }
+/* sidebar */
+.sidebar { background: #ffffff !important; border-right: 1px solid var(--line) !important; }
+.sidebar nav > button { color: #425466 !important; }
+.sidebar nav > button:hover { background: #f3f5f9 !important; color: var(--ink) !important; }
+.sidebar nav > button.active { background: var(--blue-soft) !important; color: var(--blue) !important; }
+.sidebar nav > button.active::before { background: var(--blue) !important; }
+.sidebar-course { border-top: 1px solid var(--line) !important; }
+.mini-book { background: var(--blue-soft) !important; color: var(--blue) !important; }
+.course-progress { background: #e4e8ef !important; } .course-progress > span { background: var(--blue) !important; }
+.nav-count { background: var(--blue) !important; color: #fff !important; }
+.topbar { border-bottom: 1px solid var(--line) !important; background: transparent !important; }
+.status-dot.live { background: #16a34a !important; }
+/* surfaces */
+.app-shell :is(.moment-row, .sample-tile, .tutor-panel, .learning-task, .recording-caption, .discovery-bar, .deferred-note, .empty-moments,
+  .analysis-notice, .privacy-row, .answer-feedback, .review-card, .review-aside, .notebook-entry, .notebook-empty, .lab-brief, .model-lab,
+  .projectile-lab, .physics-lounge, .lounge-welcome, .presentation-steps, .settings-block, .saved-state, .reflection-form, .simulation-result,
+  .projectile-readouts, .evidence-key, .model-key, .setup-details, .review-stats, .objectives, .watch-introduction, .onscreen-coach,
+  .upload-zone, .segmented, .mode-options, .modal, .modal-card, [class*="card"], [class*="panel"]) {
+  background: #ffffff !important; border-color: var(--line) !important; box-shadow: 0 1px 2px rgba(11,27,50,.04) !important; }
+.app-shell :is(.moment-row, .sample-tile, .review-card, .notebook-entry) { border: 1px solid var(--line) !important; }
+.app-shell :is(.moment-row:hover, .sample-tile:hover, .review-card:hover) { border-color: #b9c3d3 !important; box-shadow: 0 10px 28px rgba(11,27,50,.08) !important; }
+.moment-row.selected, .sample-tile.active { border-color: var(--blue) !important; box-shadow: 0 0 0 1px var(--blue) inset !important; }
+.moment-number { color: var(--blue) !important; font-family: var(--mono); }
+.recording-caption { background: transparent !important; box-shadow: none !important; border: none !important; }
+/* the "up next" card: navy hero object */
+.moment-invitation { background: linear-gradient(160deg, #10254a, #0b1b32) !important; border: 1px solid #0b1b32 !important;
+  box-shadow: 0 24px 50px rgba(11,27,50,.25) !important; position: relative; overflow: hidden; }
+.moment-invitation::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: linear-gradient(90deg, var(--blue), #7a5cff); }
+.moment-invitation :is(h2, span, small, .eyebrow, .invitation-eyebrow span) { color: #ffffff !important; }
+.moment-invitation p { color: #c7d0e0 !important; }
+.moment-invitation .invitation-eyebrow span { color: #9db0ff !important; }
+.moment-invitation .button.primary { background: #ffffff !important; color: var(--ink) !important; box-shadow: none !important; }
+.invitation-sketch { border-radius: 6px; }
+/* dropzone */
+.dropzone { background: #ffffff !important; border: 1.5px dashed #b9c3d3 !important; }
+.dropzone:hover { border-color: var(--blue) !important; box-shadow: 0 0 0 4px var(--blue-soft), 0 14px 34px rgba(11,27,50,.08) !important; }
+.dropzone-icon { background: var(--blue) !important; color: #fff !important; box-shadow: 0 8px 20px rgba(43,77,255,.28) !important; }
+.how-steps b { color: var(--blue) !important; }
+/* controls: cobalt = interface */
+.button.primary, .coach-cta, .present-button { background: var(--blue) !important; color: #fff !important; border-color: transparent !important;
+  box-shadow: 0 6px 18px rgba(43,77,255,.24) !important; font-weight: 600 !important; }
+.button.primary:hover:not(:disabled), .coach-cta:hover { background: var(--blue-deep) !important; }
+.button.primary *, .coach-cta * { color: #fff !important; }
+.button.secondary, .icon-button, .vector-toggle, .segmented button, .mode-options button, .availability-button, .hint-button, .modal-close, .save-later, .remove-entry {
+  background: #ffffff !important; border: 1px solid #d9dfe8 !important; color: var(--ink) !important; }
+.button.secondary:hover:not(:disabled), .icon-button:hover { background: #f3f5f9 !important; border-color: #b9c3d3 !important; }
+.text-button { color: var(--blue) !important; }
+.prediction-options button, .review-options button { background: #ffffff !important; border: 1px solid #d9dfe8 !important; color: var(--ink) !important; }
+.prediction-options button:hover, .review-options button:hover { border-color: var(--blue) !important; background: #fbfbff !important; }
+.prediction-options button.chosen, .review-options button.chosen, .prediction-options button[aria-pressed="true"] { border-color: var(--blue) !important; background: var(--blue-soft) !important; }
+.answer-feedback.correct { border-left: 3px solid #16a34a !important; } .answer-feedback.try-again { border-left: 3px solid var(--hot) !important; }
+.app-shell :is(input, select, textarea) { background: #fff !important; color: var(--ink) !important; border: 1px solid #d9dfe8 !important; }
+.app-shell :is(input, select, textarea):focus { outline: none; border-color: var(--blue) !important; box-shadow: 0 0 0 3px var(--blue-soft) !important; }
+.app-shell input[type="range"] { accent-color: var(--blue); border: none !important; }
+.app-shell :focus-visible { outline: 2px solid var(--blue) !important; outline-offset: 2px; }
+.pill, .source-tag, .week-badge { background: var(--blue-soft) !important; border: 1px solid #c7d2fe !important; color: var(--blue) !important; }
+/* video / timeline: orange = data */
+.video-player { background: #0b1b32 !important; border: 1px solid var(--line); box-shadow: 0 20px 50px rgba(11,27,50,.18) !important; }
+.timeline-track { border-top-color: #d9dfe8 !important; } .timeline-track::after { background: linear-gradient(90deg, var(--hot), transparent) !important; opacity: .45 !important; }
+.timeline-head strong { color: var(--ink) !important; font-family: var(--mono); font-weight: 500 !important; } .timeline-head span { font-family: var(--mono); }
+.pin-head { background: var(--hot) !important; color: #fff !important; box-shadow: 0 4px 12px rgba(255,106,31,.35) !important; }
+.record-dot, .pulse-dot { background: var(--hot) !important; }
+/* chat */
+.chat-message.assistant p { background: #f3f5f9 !important; color: var(--ink) !important; border: 1px solid var(--line); }
+.chat-message.user p { background: var(--blue-soft) !important; color: var(--ink) !important; border: 1px solid #c7d2fe; }
+.thinking-indicator span { background: var(--blue) !important; } .lens-avatar { background: var(--blue) !important; }
+.toast { background: #0b1b32 !important; color: #fff !important; }
+.modal-scrim { background: rgba(11,27,50,.45) !important; backdrop-filter: blur(4px); }
+.success-seal { background: #16a34a !important; color: #fff !important; }
+.page-enter { animation: lens-page 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes lens-page { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page-enter { animation: none; } }
+
+/* ---- typography system ---- */
+body, .app-shell, .app-shell :is(button, input, select, textarea) { font-family: var(--sans) !important; }
+.app-shell :is(h1, h2, h3, h4), .brand > span:last-child, .moment-invitation h2, .question-card h3 {
+  font-family: var(--serif) !important; font-weight: 800 !important; font-stretch: 120% !important; letter-spacing: -0.03em; font-style: normal !important; }
+.app-shell h1 em, .app-shell h2 em { font-style: normal !important; }
+.app-shell :is(.eyebrow, .task-label, .samples-label, .prepared-label, .week-badge, .coach-question-kicker, .invitation-eyebrow span, .message-source, .hud-eyebrow, .hud-value, .pin-head, .pin-time, .timeline-head) { font-family: var(--mono) !important; }
+/* lesson panel: text that was designed for the old dark-green surface */
+.app-shell :is(.watch-introduction, .onscreen-coach) :is(.onscreen-coach-identity, .sequence-line, .watch-sequence),
+.app-shell :is(.onscreen-coach-identity, .sequence-line, .watch-sequence) :is(span, small, strong, b, p, em) { color: #425466 !important; }
+.app-shell .onscreen-coach-identity strong, .app-shell .watch-sequence strong { color: var(--ink) !important; }
+.app-shell :is(.sequence-line, .watch-sequence) { border-color: #d9dfe8 !important; }
+.app-shell :is(.sequence-line, .watch-sequence) :is(hr, i, svg) { color: #b9c3d3 !important; border-color: #d9dfe8 !important; }
+.app-shell .onscreen-coach-identity :is(.lens-avatar, .lens-mark) { background: var(--blue) !important; }

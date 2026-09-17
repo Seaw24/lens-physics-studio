@@ -43,7 +43,7 @@ export default function Guide({
     <div className="guide-page page-enter">
       <div className="guide-hero">
         <div>
-          <h1>How Lens works</h1>
+          <h1>How Momentum works</h1>
           <p>
             A real video becomes a short guided lesson — watch, think, test,
             explain.

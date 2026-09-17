@@ -72,7 +72,7 @@ export function BasketballArt() {
       <text
         x="26"
         y="36"
-        fontFamily="DM Sans Variable,sans-serif"
+        fontFamily="Source Code Pro,monospace"
         fontSize="10"
         letterSpacing="1.5"
         fill="#6e8550"
