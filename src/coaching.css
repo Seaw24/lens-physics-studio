@@ -268,13 +268,13 @@
   overflow: hidden;
 }
 .coach-svg-label {
-  font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--serif);
   font-size: 43px;
   fill: #f6f5e9;
   font-weight: 600;
 }
 .coach-svg-small {
-  font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
+  font-family: var(--sans);
   font-size: 34px;
   fill: #d6edb1;
 }

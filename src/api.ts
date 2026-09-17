@@ -1,5 +1,5 @@
 import type { Moment, Message, Concept, TutorReply } from "../shared/physics";
-import type { CourseAnalysis } from "../shared/diagnostic";
+import type { CourseAnalysis, DiagnosticQuestion, MissedAttempt } from "../shared/diagnostic";
 export interface ServiceStatus {
   configured: boolean;
   mode: "bedrock" | "rehearsal";
@@ -108,6 +108,25 @@ export const analyzeCoursePdf = (data: string, signal?: AbortSignal) =>
     mode: "bedrock";
     model: string;
   }>("/api/analyze-course", { data }, signal);
+
+export const askRemediation = (
+  body: {
+    action: "open" | "chat" | "quiz";
+    message?: string;
+    history?: { role: "user" | "assistant"; content: string }[];
+    focus: string;
+    summary: string;
+    missed: MissedAttempt[];
+    seenIds?: string[];
+    mode: string;
+  },
+  signal?: AbortSignal,
+) =>
+  request<{
+    reply?: string;
+    questions?: DiagnosticQuestion[];
+    mode: "bedrock" | "rehearsal";
+  }>("/api/remediate", body, signal);
 // Select low-resolution, chronological evidence from a local file. No audio or full video is uploaded.
 export async function sampleVideo(
   url: string,

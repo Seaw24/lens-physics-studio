@@ -25,6 +25,12 @@ export interface DetectedTopic {
   label: string;
   evidenceCount: number;
   prerequisites: string[];
+  evidence?: PdfEvidenceReference[];
+}
+
+export interface PdfEvidenceReference {
+  page: number;
+  excerpt: string;
 }
 
 export interface CourseMap {
@@ -63,6 +69,18 @@ export interface SkillResult {
   total: number;
   status: SkillStatus;
   note: string;
+}
+
+export interface MissedAttempt {
+  id: string;
+  topic: PhysicsTopicId;
+  skill: string;
+  prompt: string;
+  options: string[];
+  chosenIndex: number;
+  correctIndex: number;
+  explanation: string;
+  misconception: string;
 }
 
 const topics: Record<
@@ -671,4 +689,152 @@ export function nextLessonFor(results: SkillResult[]) {
     },
   };
   return { topic, ...plans[topic] };
+}
+
+export function missedAttempts(
+  questions: DiagnosticQuestion[],
+  answers: Record<string, number>,
+): MissedAttempt[] {
+  return questions
+    .filter(
+      (question) =>
+        Number.isInteger(answers[question.id]) &&
+        answers[question.id] !== question.correctIndex,
+    )
+    .map((question) => ({
+      id: question.id,
+      topic: question.topic,
+      skill: question.skill,
+      prompt: question.prompt,
+      options: question.options,
+      chosenIndex: answers[question.id],
+      correctIndex: question.correctIndex,
+      explanation: question.explanation,
+      misconception: question.misconception,
+    }));
+}
+
+export function signalsUnderstanding(text: string) {
+  return /\b(i understand|i got it|got it|makes sense|i see now|that clicks|ready to check|i'?m ready)\b/i.test(
+    text.trim(),
+  );
+}
+
+export function verificationQuestionsFor(
+  missed: MissedAttempt[],
+  seenIds: string[],
+  limit = 2,
+): DiagnosticQuestion[] {
+  const seen = new Set(seenIds);
+  const selected: DiagnosticQuestion[] = [];
+  const take = (candidate: DiagnosticQuestion) => {
+    if (
+      seen.has(candidate.id) ||
+      selected.some((item) => item.id === candidate.id)
+    )
+      return;
+    selected.push(candidate);
+  };
+  const topicOrder = [
+    ...new Set(missed.map((item) => item.topic)),
+    ...fallbackOrder,
+  ];
+  for (const topic of topicOrder) {
+    for (const candidate of questionBank.filter(
+      (item) => item.topic === topic,
+    )) {
+      take(candidate);
+      if (selected.length >= limit) return selected;
+    }
+  }
+  for (const candidate of questionBank) {
+    take(candidate);
+    if (selected.length >= limit) break;
+  }
+  return selected;
+}
+
+export function remediationOpening(missed: MissedAttempt[], focus: string) {
+  if (!missed.length) {
+    return `Your check on ${focus} looked solid. Saying “I understand” is not the test — a new situation is. Tell me which idea you want to lock in, or start the check when you are ready.`;
+  }
+  const first = missed[0];
+  const chosen =
+    first.options[first.chosenIndex] ||
+    "a different option from the correct one";
+  const extra =
+    missed.length > 1
+      ? ` We can come back to ${missed[1].skill.toLowerCase()} after this.`
+      : "";
+  return `On ${focus}, the idea that still needs work is ${first.skill.toLowerCase()}. You chose “${chosen}.” ${first.misconception} ${first.explanation}${extra} In your own words, why is the correct picture different?`;
+}
+
+export function remediationChatReply(
+  message: string,
+  missed: MissedAttempt[],
+) {
+  if (signalsUnderstanding(message)) {
+    return "Good — that is a start, not the finish. The next step is a short check in a new situation, not the same question again. Start the check when you want to see whether the idea transfers.";
+  }
+  const first = missed[0];
+  if (!first) {
+    return "Pick one idea from this unit and explain it as if you were teaching a classmate. Then we will try it in a new situation.";
+  }
+  const q = message.toLowerCase();
+  if (/why|how|still|confused|don't|dont|wrong/.test(q)) {
+    return `${first.explanation} The usual mix-up is this: ${first.misconception} Try saying the distinction in one sentence of your own, without repeating the options.`;
+  }
+  return `Keep going on ${first.skill.toLowerCase()}. ${first.misconception} If you can restate the correct idea without looking at the original choices, we can check it in a new example.`;
+}
+
+export function courseNotebookId(focus: string) {
+  const slug = focus
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48);
+  return `course-${slug || "unit"}`;
+}
+
+export function courseNotebookRecord({
+  focus,
+  title,
+  missed,
+  check,
+  checkAnswers,
+  mode,
+}: {
+  focus: string;
+  title: string;
+  missed: MissedAttempt[];
+  check: DiagnosticQuestion[];
+  checkAnswers: Record<string, number>;
+  mode: string;
+}) {
+  const correct = check.filter(
+    (question) => checkAnswers[question.id] === question.correctIndex,
+  ).length;
+  const passed = check.length > 0 && correct === check.length;
+  const skills = missed.map((item) => item.skill.toLowerCase());
+  const id = courseNotebookId(focus);
+  return {
+    id,
+    momentId: id,
+    title,
+    concept: missed[0]?.topic || "course",
+    answer: check.length
+      ? `${correct}/${check.length} transferred`
+      : "No transfer check yet",
+    reflection: passed
+      ? skills.length
+        ? `After coaching on ${skills.join(" and ")}, the idea held up in a new situation in ${focus}.`
+        : `A transfer check in ${focus} held up in a new situation.`
+      : skills.length
+        ? `Still working through ${skills.join(" and ")} in ${focus}. Transfer check: ${correct}/${check.length}.`
+        : `Transfer check in ${focus}: ${correct}/${check.length}. The idea still needs another pass.`,
+    completedAt: new Date().toISOString(),
+    hints: missed.length,
+    mode,
+    kind: "course" as const,
+  };
 }

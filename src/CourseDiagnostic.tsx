@@ -19,7 +19,6 @@ import {
   Upload,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { COURSE } from "../shared/physics";
 import {
   analyzeCourseSources,
   buildDiagnostic,
@@ -29,38 +28,29 @@ import {
   type SkillResult,
 } from "../shared/diagnostic";
 import { analyzeCoursePdf } from "./api";
+import CourseRemediation from "./CourseRemediation";
+import type { LearningRecord } from "../shared/physics";
 
-type Phase = "map" | "quiz" | "results";
+type Phase = "map" | "quiz" | "results" | "remediate";
 
 const sourcesKey = "lens-course-sources-v1";
 const diagnosticKey = "lens-course-diagnostic-v1";
 
-const sampleSource: CourseSource = {
-  id: "sample-projectile-notes",
-  name: "Week 04 · Projectile motion notes",
-  content: [
-    COURSE.description,
-    ...COURSE.objectives,
-    ...COURSE.notes.map((note) => `${note.title}. ${note.body}`),
-  ].join("\n"),
-  addedAt: "Sample course",
-  sample: true,
-};
-
 function readSources() {
   try {
     const value = JSON.parse(localStorage.getItem(sourcesKey) || "[]");
-    if (!Array.isArray(value) || !value.length) return [sampleSource];
+    if (!Array.isArray(value)) return [];
     return value.filter(
       (source): source is CourseSource =>
         source &&
+        !source.sample &&
         typeof source.id === "string" &&
         typeof source.name === "string" &&
         typeof source.content === "string" &&
         typeof source.addedAt === "string",
     );
   } catch {
-    return [sampleSource];
+    return [];
   }
 }
 
@@ -77,23 +67,24 @@ function statusLabel(status: SkillResult["status"]) {
 }
 
 export default function CourseDiagnostic({
-  onStartLesson,
   bedrockAvailable,
   onOpenSettings,
+  onSave,
+  onOpenNotebook,
 }: {
-  onStartLesson: () => void;
   bedrockAvailable: boolean;
   onOpenSettings: () => void;
+  onSave: (record: LearningRecord) => void;
+  onOpenNotebook: () => void;
 }) {
   const [sources, setSources] = useState<CourseSource[]>(readSources);
   const [phase, setPhase] = useState<Phase>("map");
   const [showMaterials, setShowMaterials] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [materialName, setMaterialName] = useState("My lecture notes");
   const [materialError, setMaterialError] = useState("");
   const [pdfStage, setPdfStage] = useState<"idle" | "reading" | "analyzing">(
     "idle",
   );
+  const [draggingPdf, setDraggingPdf] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -113,6 +104,18 @@ export default function CourseDiagnostic({
     [answers, questions],
   );
   const nextLesson = useMemo(() => nextLessonFor(results), [results]);
+  const pdfEvidence = useMemo(
+    () =>
+      courseMap.topics
+        .flatMap((topic) =>
+          (topic.evidence || []).map((evidence) => ({
+            ...evidence,
+            topic: topic.label,
+          })),
+        )
+        .slice(0, 2),
+    [courseMap.topics],
+  );
   const signature = sourceSignature(sources);
 
   useEffect(() => {
@@ -150,7 +153,7 @@ export default function CourseDiagnostic({
   );
 
   function replaceSources(next: CourseSource[]) {
-    setSources(next.length ? next : [sampleSource]);
+    setSources(next);
     setAnswers({});
     setQuestionIndex(0);
     setPhase("map");
@@ -160,14 +163,6 @@ export default function CourseDiagnostic({
     } catch {
       // Ignore unavailable storage.
     }
-  }
-
-  function appendSources(next: CourseSource[]) {
-    const withoutSample = sources.every((source) => source.sample)
-      ? []
-      : sources;
-    replaceSources([...withoutSample, ...next].slice(-8));
-    setShowMaterials(false);
   }
 
   async function addPdf(file?: File) {
@@ -199,7 +194,7 @@ export default function CourseDiagnostic({
         );
       setPdfStage("analyzing");
       const result = await analyzeCoursePdf(btoa(binary), controller.signal);
-      appendSources([
+      replaceSources([
         {
           id: `pdf-${Date.now()}`,
           name: file.name,
@@ -210,6 +205,7 @@ export default function CourseDiagnostic({
           analysis: result.analysis,
         },
       ]);
+      setShowMaterials(false);
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError"))
         setMaterialError(
@@ -223,25 +219,8 @@ export default function CourseDiagnostic({
     }
   }
 
-  function addDraft() {
-    const content = draft.trim();
-    if (content.length < 80) {
-      setMaterialError(
-        "Paste at least a short paragraph so Momentum has enough course language to map.",
-      );
-      return;
-    }
-    appendSources([
-      {
-        id: `pasted-${Date.now()}`,
-        name: materialName.trim() || "Pasted lecture notes",
-        content: content.slice(0, 120000),
-        addedAt: new Date().toISOString(),
-      },
-    ]);
-    setDraft("");
-    setMaterialName("My lecture notes");
-    setMaterialError("");
+  function pdfFileFromList(files?: FileList | null) {
+    return files?.[0];
   }
 
   function startDiagnostic() {
@@ -261,6 +240,23 @@ export default function CourseDiagnostic({
     } catch {
       // Keep the result in memory when storage is unavailable.
     }
+  }
+
+  if (phase === "remediate") {
+    return (
+      <CourseRemediation
+        focus={courseMap.focus}
+        summary={courseMap.summary}
+        title={nextLesson.title}
+        questions={questions}
+        answers={answers}
+        bedrockAvailable={bedrockAvailable}
+        onOpenSettings={onOpenSettings}
+        onBack={() => setPhase("results")}
+        onSave={onSave}
+        onOpenNotebook={onOpenNotebook}
+      />
+    );
   }
 
   if (phase === "quiz") {
@@ -393,46 +389,51 @@ export default function CourseDiagnostic({
               </div>
               <span>From this check</span>
             </div>
-            {results.map((result) => (
-              <article
-                className={`skill-result ${result.status}`}
-                key={result.topic}
-              >
-                <span className="skill-status-icon">
-                  {result.status === "strong" ? (
-                    <CheckCircle2 size={18} />
-                  ) : result.status === "developing" ? (
-                    <Target size={18} />
-                  ) : (
-                    <CircleAlert size={18} />
-                  )}
-                </span>
-                <div>
+            <div className="skill-result-grid">
+              {results.map((result) => (
+                <article
+                  className={`skill-result ${result.status}`}
+                  key={result.topic}
+                >
+                  <span className="skill-status-icon">
+                    {result.status === "strong" ? (
+                      <CheckCircle2 size={18} />
+                    ) : result.status === "developing" ? (
+                      <Target size={18} />
+                    ) : (
+                      <CircleAlert size={18} />
+                    )}
+                  </span>
                   <div>
-                    <strong>{result.label}</strong>
-                    <span>{statusLabel(result.status)}</span>
+                    <div>
+                      <strong>{result.label}</strong>
+                      <span>{statusLabel(result.status)}</span>
+                    </div>
+                    <p>{result.note}</p>
                   </div>
-                  <p>{result.note}</p>
-                </div>
-                <small>
-                  {result.correct}/{result.total}
-                </small>
-              </article>
-            ))}
+                  <small>
+                    {result.correct}/{result.total}
+                  </small>
+                </article>
+              ))}
+            </div>
           </div>
           <aside className="next-lesson-card">
-            <div className="eyebrow">RECOMMENDED NEXT · 12 MIN</div>
+            <div className="eyebrow">NEXT · COACHING SESSION</div>
             <span className="route-icon">
               <Route size={21} />
             </span>
             <h3>{nextLesson.title}</h3>
-            <p>{nextLesson.why}</p>
+            <p>
+              A tutor will work the mix-up with you. A new-situation check
+              decides whether it transferred — not “I understand.”
+            </p>
             <ol>
               {nextLesson.steps.map((step) => (
                 <li key={step}>{step}</li>
               ))}
             </ol>
-            <button className="button pale" onClick={onStartLesson}>
+            <button className="button pale" onClick={() => setPhase("remediate")}>
               Start my next lesson <ArrowRight size={15} />
             </button>
           </aside>
@@ -473,31 +474,58 @@ export default function CourseDiagnostic({
     );
   }
 
+  const showingUpload = showMaterials || !sources.length;
+
   return (
-    <section className="diagnostic-shell">
+    <section
+      className={`diagnostic-shell${showingUpload ? " diagnostic-upload" : ""}`}
+    >
       <div className="diagnostic-header">
         <div className="diagnostic-title-icon">
           <BrainCircuit size={24} />
         </div>
         <div>
-          <div className="eyebrow">DIAGNOSE BEFORE TEACHING</div>
-          <h2>Your course sets the starting line.</h2>
+          <div className="eyebrow">STEP 1 OF 3</div>
+          <h2>{sources.length ? "Here’s what we found." : "Add your course PDF."}</h2>
           <p>
-            Map your material, then take a short skills check.
+            {sources.length
+              ? "Confirm your current unit, then start a short skills check."
+              : "Momentum uses your PDF to create a focused starting point."}
           </p>
         </div>
-        <button
-          className="button secondary"
-          onClick={() => setShowMaterials((visible) => !visible)}
-        >
-          {showMaterials ? <ArrowLeft size={15} /> : <Upload size={15} />}
-          {showMaterials ? "Back to course map" : "Add course material"}
-        </button>
+        {sources.length > 0 && (
+          <button
+            className="button secondary"
+            onClick={() => setShowMaterials((visible) => !visible)}
+          >
+            {showMaterials ? <ArrowLeft size={15} /> : <Upload size={15} />}
+            {showMaterials ? "Back to my course" : "Replace course PDF"}
+          </button>
+        )}
       </div>
 
-      {showMaterials ? (
+      {showingUpload ? (
         <div className="materials-workspace">
-          <div className="material-upload-card">
+          <div
+            className={`material-upload-card${draggingPdf ? " is-dragging" : ""}`}
+            onDragEnter={(event) => {
+              event.preventDefault();
+              if (bedrockAvailable && pdfStage === "idle") setDraggingPdf(true);
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              if (bedrockAvailable && pdfStage === "idle") setDraggingPdf(true);
+            }}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node))
+                setDraggingPdf(false);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDraggingPdf(false);
+              void addPdf(pdfFileFromList(event.dataTransfer.files));
+            }}
+          >
             <input
               ref={fileInput}
               className="sr-only"
@@ -505,13 +533,15 @@ export default function CourseDiagnostic({
               accept=".pdf,application/pdf"
               disabled={!bedrockAvailable || pdfStage !== "idle"}
               onChange={(event) => {
-                void addPdf(event.target.files?.[0]);
+                void addPdf(pdfFileFromList(event.target.files));
                 event.target.value = "";
               }}
             />
             {pdfStage !== "idle" ? (
               <div className="pdf-analysis-progress" role="status">
-                <LoaderCircle size={25} className="spin" />
+                <span className="material-upload-icon">
+                  <LoaderCircle size={28} className="spin" />
+                </span>
                 <strong>
                   {pdfStage === "reading"
                     ? "Preparing your PDF…"
@@ -530,14 +560,21 @@ export default function CourseDiagnostic({
                 </button>
               </div>
             ) : bedrockAvailable ? (
-              <button onClick={() => fileInput.current?.click()}>
-                <Upload size={24} />
+              <button
+                type="button"
+                onClick={() => fileInput.current?.click()}
+              >
+                <span className="material-upload-icon">
+                  <Upload size={28} />
+                </span>
                 <strong>Analyze a course PDF</strong>
-                <span>PDF · one file · up to 15 MB</span>
+                <span>Drag and drop, or click to browse · one PDF · up to 15 MB</span>
               </button>
             ) : (
-              <button onClick={onOpenSettings}>
-                <Sparkles size={24} />
+              <button type="button" onClick={onOpenSettings}>
+                <span className="material-upload-icon">
+                  <Sparkles size={28} />
+                </span>
                 <strong>Connect Bedrock for PDF analysis</strong>
                 <span>Open Studio settings to connect the AI model</span>
               </button>
@@ -549,31 +586,6 @@ export default function CourseDiagnostic({
                 then discarded. Only the course map and diagnostic are stored in
                 this browser.
               </span>
-            </div>
-          </div>
-          <div className="material-paste-card">
-            <label htmlFor="material-name">Material name</label>
-            <input
-              id="material-name"
-              value={materialName}
-              maxLength={70}
-              onChange={(event) => setMaterialName(event.target.value)}
-            />
-            <label htmlFor="material-text">
-              Or paste notes, a syllabus, or study guide
-            </label>
-            <textarea
-              id="material-text"
-              value={draft}
-              rows={6}
-              placeholder="Paste the section your class is working on…"
-              onChange={(event) => setDraft(event.target.value)}
-            />
-            <div>
-              <small>{draft.trim().length.toLocaleString()} characters</small>
-              <button className="button primary" onClick={addDraft}>
-                Map this material <Sparkles size={15} />
-              </button>
             </div>
           </div>
           {materialError && (
@@ -588,111 +600,99 @@ export default function CourseDiagnostic({
             <div className="diagnostic-section-title">
               <div>
                 <BookOpenCheck size={18} />
-                <h3>Momentum found in your material</h3>
+                <h3>Your current unit</h3>
               </div>
               <span>
                 {sources.length} source{sources.length === 1 ? "" : "s"}
               </span>
             </div>
-            <div className="course-focus">
-              <span>
-                {aiAnalysis
-                  ? `BEDROCK COURSE MAP · ${aiAnalysis.title}`
-                  : "Current focus"}
-              </span>
-              <strong>{courseMap.focus}</strong>
+            <div className="course-analysis-card">
+              <span className="analysis-label">Focus for this check</span>
+              <h4>{courseMap.focus}</h4>
               <p>{courseMap.summary}</p>
-            </div>
-            <div className="detected-topics">
-              {courseMap.topics.map((topic, index) => (
-                <article key={topic.id}>
-                  <span>0{index + 1}</span>
-                  <div>
-                    <strong>{topic.label}</strong>
+              <div className="course-topic-summary">
+                <span>Key ideas</span>
+                <div>
+                  {courseMap.topics.slice(0, 3).map((topic) => (
+                    <span key={topic.id}>{topic.label}</span>
+                  ))}
+                </div>
+              </div>
+              {pdfEvidence.length > 0 && (
+                <details className="pdf-evidence">
+                  <summary>
+                    <span>Why Momentum mapped this</span>
                     <small>
-                      Prerequisites: {topic.prerequisites.join(" · ")}
+                      {pdfEvidence.length} PDF reference
+                      {pdfEvidence.length === 1 ? "" : "s"}
                     </small>
+                    <ChevronRight size={13} />
+                  </summary>
+                  <div>
+                    {pdfEvidence.map((evidence) => (
+                      <article
+                        key={`${evidence.topic}-${evidence.page}-${evidence.excerpt}`}
+                      >
+                        <div>
+                          <strong>{evidence.topic}</strong>
+                          <small>Page {evidence.page}</small>
+                        </div>
+                        <p>{evidence.excerpt}</p>
+                      </article>
+                    ))}
                   </div>
-                  <em>
-                    {aiAnalysis
-                      ? "AI mapped"
-                      : `${topic.evidenceCount} signals`}
-                  </em>
-                </article>
-              ))}
+                </details>
+              )}
             </div>
           </div>
           <aside className="diagnostic-start-card">
-            <div className="eyebrow">READY FOR A QUICK CHECK</div>
-            <span className="spark-orbit" aria-hidden="true">
-              <Sparkles size={22} />
-            </span>
-            <h3>Five questions. A much better place to begin.</h3>
+            <div className="eyebrow">YOUR NEXT STEP</div>
+            <h3>Find your best place to begin.</h3>
             <p>
-              A mix of concepts, interpretation, and calculation—selected from
-              the material at left.
+              Five questions from this unit give Momentum the signal it needs to
+              guide your first lesson.
             </p>
-            <ul>
-              <li>
-                <Check size={13} /> About 7 minutes
-              </li>
-              <li>
-                <Check size={13} /> No penalty for guessing
-              </li>
-              <li>
-                <Check size={13} /> Skill-level next steps
-              </li>
-            </ul>
             <button className="button pale" onClick={startDiagnostic}>
-              Confirm & start diagnostic <ArrowRight size={15} />
+              Start my 5-question check <ArrowRight size={15} />
             </button>
             <small>
               {confirmed
                 ? "Course context confirmed"
-                : "Does this match your class? Add material to correct it."}
+                : "Not your unit? Change the PDF before you begin."}
             </small>
           </aside>
           <div className="material-list">
-            <div className="diagnostic-section-title">
-              <div>
-                <FileText size={17} />
-                <h3>Course sources</h3>
-              </div>
-              <button
-                className="text-button"
-                onClick={() => setShowMaterials(true)}
-              >
-                Add another <ChevronRight size={13} />
-              </button>
-            </div>
-            {sources.map((source) => (
-              <div key={source.id}>
-                <span className="file-icon">
-                  <FileText size={15} />
-                </span>
-                <div>
-                  <strong>{source.name}</strong>
-                  <small>
-                    {source.sample
-                      ? "Prepared sample · replace with your notes"
-                      : source.kind === "pdf"
-                        ? `${((source.fileSize || 0) / 1024 / 1024).toFixed(1)} MB · analyzed with Bedrock · PDF not stored`
-                        : `${source.content.length < 1000 ? source.content.length : `${(source.content.length / 1000).toFixed(1)}k`} characters · stored locally`}
-                  </small>
+            <details>
+              <summary>
+                <FileText size={15} /> {sources.length} course source
+                {sources.length === 1 ? "" : "s"} connected
+                <ChevronRight size={13} />
+              </summary>
+              {sources.map((source) => (
+                <div key={source.id}>
+                  <span className="file-icon">
+                    <FileText size={15} />
+                  </span>
+                  <div>
+                    <strong>{source.name}</strong>
+                    <small>
+                      {`${((source.fileSize || 0) / 1024 / 1024).toFixed(1)} MB · analyzed with Bedrock · PDF not stored`}
+                    </small>
+                  </div>
+                  <button
+                    className="icon-button"
+                    aria-label={`Remove ${source.name}`}
+                    onClick={() =>
+                      replaceSources(
+                        sources.filter((item) => item.id !== source.id),
+                      )
+                    }
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </div>
-                <button
-                  className="icon-button"
-                  aria-label={`Remove ${source.name}`}
-                  onClick={() =>
-                    replaceSources(
-                      sources.filter((item) => item.id !== source.id),
-                    )
-                  }
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            ))}
+              ))}
+            </details>
           </div>
         </div>
       )}

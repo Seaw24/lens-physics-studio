@@ -132,7 +132,7 @@
   font-variant-numeric: tabular-nums;
 }
 .projectile-readouts strong > span {
-  font-family: "Source Code Pro", ui-monospace, Menlo, monospace;
+  font-family: var(--mono);
   font-size: 10px;
   color: #789759;
   font-weight: 400;

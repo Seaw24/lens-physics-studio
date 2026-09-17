@@ -7,6 +7,7 @@ import {
   courseOutputConfig,
   parseCourseAnalysisText,
   safeCourseErrorDetails,
+  validateEvidencePageReferences,
 } from "../server/courseAnalysis";
 
 function validAnalysis() {
@@ -22,9 +23,15 @@ function validAnalysis() {
     ],
     topics: [
       {
-        id: "kinematics",
-        label: "Galilean transformations",
-        prerequisites: ["Velocity", "Basic algebra"],
+      id: "kinematics",
+      label: "Galilean transformations",
+      prerequisites: ["Velocity", "Basic algebra"],
+      evidence: [
+        {
+          page: 2,
+          excerpt: "The notes compare coordinates and velocities between inertial frames.",
+        },
+      ],
       },
     ],
     questions: Array.from({ length: 5 }, (_, index) => ({
@@ -68,6 +75,16 @@ test("course analysis turns malformed model output into a typed error", () => {
   );
 });
 
+test("course analysis rejects evidence references outside the uploaded PDF", () => {
+  const analysis = validAnalysis();
+  assert.throws(
+    () => validateEvidencePageReferences(parseCourseAnalysisText(JSON.stringify(analysis)), 1),
+    (error: unknown) =>
+      error instanceof CourseModelOutputError &&
+      error.issuePaths.includes("topics.0.evidence.0.page"),
+  );
+});
+
 test("not-physics output is distinct from a malformed response", () => {
   assert.throws(
     () => parseCourseAnalysisText('{"error":"NOT_PHYSICS"}'),
@@ -82,6 +99,9 @@ test("Opus 4.6 uses Bedrock structured output while Nova keeps prompt JSON", () 
     opus?.textFormat.structure.jsonSchema.schema || "",
     /physics|questions|correctIndex/,
   );
+  const schema = JSON.parse(opus?.textFormat.structure.jsonSchema.schema || "{}");
+  const pageSchema = schema.anyOf[0].properties.topics.items.properties.evidence.items.properties.page;
+  assert.deepEqual(pageSchema, { type: "integer" });
   assert.equal(courseOutputConfig("amazon.nova-lite-v1:0"), undefined);
 });
 

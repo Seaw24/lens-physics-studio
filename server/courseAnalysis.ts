@@ -14,18 +14,24 @@ const topicIds = [
 
 export const physicsTopicSchema = z.enum(topicIds);
 
+const pdfEvidenceSchema = z.object({
+  page: z.number().int().min(1).max(10),
+  excerpt: z.string().trim().min(8).max(220),
+});
+
 export const aiCourseSchema = z.object({
-  title: z.string().trim().min(3).max(200),
-  focus: z.string().trim().min(3).max(400),
-  summary: z.string().trim().min(20).max(3000),
+  title: z.string().trim().min(3).max(120),
+  focus: z.string().trim().min(3).max(120),
+  summary: z.string().trim().min(20).max(700),
   language: z.string().trim().min(2).max(80),
   objectives: z.array(z.string().trim().min(8).max(400)).min(2).max(6),
   topics: z
     .array(
       z.object({
         id: physicsTopicSchema,
-        label: z.string().trim().min(3).max(200),
+        label: z.string().trim().min(3).max(100),
         prerequisites: z.array(z.string().trim().min(2).max(200)).min(1).max(4),
+        evidence: z.array(pdfEvidenceSchema).min(1).max(2),
       }),
     )
     .min(1)
@@ -47,6 +53,25 @@ export const aiCourseSchema = z.object({
 });
 
 export type AiCourseAnalysis = z.infer<typeof aiCourseSchema>;
+
+export function validateEvidencePageReferences(
+  analysis: AiCourseAnalysis,
+  pageCount: number,
+) {
+  const issuePaths = analysis.topics.flatMap((topic, topicIndex) =>
+    topic.evidence.flatMap((evidence, evidenceIndex) =>
+      evidence.page <= pageCount
+        ? []
+        : [`topics.${topicIndex}.evidence.${evidenceIndex}.page`],
+    ),
+  );
+  if (issuePaths.length)
+    throw new CourseModelOutputError(
+      "The model cited a page outside this PDF.",
+      issuePaths,
+    );
+  return analysis;
+}
 
 export class CourseModelOutputError extends Error {
   readonly issuePaths: string[];
@@ -239,8 +264,23 @@ const analysisJsonSchema = {
           id: { type: "string", enum: topicIds },
           label: { type: "string" },
           prerequisites: { type: "array", items: { type: "string" } },
+          evidence: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                // Bedrock structured output accepts the integer type but not
+                // JSON Schema numeric bounds. The server validates the page
+                // range against the uploaded PDF after the response arrives.
+                page: { type: "integer" },
+                excerpt: { type: "string" },
+              },
+              required: ["page", "excerpt"],
+              additionalProperties: false,
+            },
+          },
         },
-        required: ["id", "label", "prerequisites"],
+        required: ["id", "label", "prerequisites", "evidence"],
         additionalProperties: false,
       },
     },
